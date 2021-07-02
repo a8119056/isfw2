@@ -8,17 +8,40 @@
     <script type="text/javascript" src="lib/jquery.min.js"></script>
     <script type="text/javascript" src="lib/osql.js"></script>
 
-    <script>
-        osql.requireLogin();
-    </script>
-
 </head>
 
 <body>
     <h1>ユーザトップ</h1>
     <p id="welcome">ようこそxxさん</p>
     <hr>
+    <div id="videos">
+    </div>
 
 </body>
+<script>
+    $().ready(function() {
+        init();
+    });
+
+    function init() {
+        doSelect();
+    }
+
+    osql.requireLogin();
+    var username = sessionStorage.getItem("username");
+    document.getElementById("welcome").innerHTML = "ようこそ" + username + "さん";
+
+
+    async function doSelect() {
+        var sql = "select Videos.id as videoid, url, note, good, bad, name from Videos inner join Users on Videos.userid = Users.id;";
+        var objects = await osql.connect(sql);
+        for (let i = 0; i < objects.length; i++) {
+            object = objects[i];
+            document.getElementById("videos").innerHTML += `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user${i}"></p><p id="review${i}"></p><p><a href="detail.html?videoid=${object.videoid}">詳細</a></p>`
+            document.getElementById("user" + i).innerHTML = `<b>${object.name}</b> ${object.note}`
+            document.getElementById("review" + i).innerHTML = `<b>高評価</b>: ${object.good}   <b>低評価</b>: ${object.bad}`
+        }
+    }
+</script>
 
 </html>
