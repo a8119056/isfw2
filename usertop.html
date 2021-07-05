@@ -13,6 +13,7 @@
 <body>
     <h1>ユーザトップ</h1>
     <p id="welcome">ようこそxxさん</p>
+    <a href="index.html" onclick="buttonPressed()">ログアウト</a>
     <hr>
     <div id="videos">
     </div>
@@ -25,6 +26,10 @@
 
     function init() {
         doSelect();
+    }
+
+    function buttonPressed() {
+        osql.logout();
     }
 
     osql.requireLogin();
