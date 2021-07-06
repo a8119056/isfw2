@@ -39,7 +39,13 @@
         var sql = `select userid, url, note, good, bad, name from Videos inner join Users on Videos.userid = Users.id where Videos.id = ${videoid};`;
         var objects = await osql.connect(sql);
         var object = objects[0];
-        document.getElementById("video").innerHTML += `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user"></p><p id="review"></p><p><button id="comment-btn" onclick="selectComments()">コメントを表示</button></p><p id="comment" style="margin-left: 40px;"></p>`;
+        var count_sql = `select Videos.id from (Videos inner join Users on Videos.userid = Users.id) left join Comments on Videos.id = Comments.toid where Comments.toid = ${videoid} and !is_to_comment;`;
+        var counts = await osql.connect(count_sql);
+        if (counts.length > 0) {
+            document.getElementById("video").innerHTML = `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user"></p><p id="review"></p><p><button id="comment-btn" onclick="selectComments()">コメントを表示</button></p><p id="comment" style="margin-left: 40px;"></p>`;
+        } else {
+            document.getElementById("video").innerHTML = `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user"></p><p id="review"></p><p id="comment">まだコメントはありません。</p>`;
+        }
         document.getElementById("user").innerHTML = `<b>${object.name}</b> ${object.note}`;
         document.getElementById("review").innerHTML = `<b>高評価</b>: ${object.good}   <b>低評価</b>: ${object.bad}`;
     }
@@ -51,7 +57,13 @@
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];
             new_reply_num = reply_nums.shift();
-            document.getElementById("comment").innerHTML += `<p id="commenter${i}"></p><p id="comment-review${i}"></p><p><button id="reply-btn${new_reply_num}" onclick="selectReplies(${object.comment_id}, ${new_reply_num})">返信を表示</button><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
+            var count_sql = `select Parents.id from (Comments as Parents inner join Users on Parents.userid = Users.id) left join Comments as Childs on Parents.id = Childs.toid where Childs.toid = ${object.comment_id} and Childs.is_to_comment;`;
+            var counts = await osql.connect(count_sql);
+            if (counts.length > 0) {
+                document.getElementById("comment").innerHTML += `<p id="commenter${i}"></p><p id="comment-review${i}"></p><p><button id="reply-btn${new_reply_num}" onclick="selectReplies(${object.comment_id}, ${new_reply_num})">返信を表示</button></p><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
+            } else {
+                document.getElementById("comment").innerHTML += `<p id="commenter${i}"></p><p id="comment-review${i}"></p><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
+            }
             document.getElementById("commenter" + i).innerHTML = `<b>${object.name}</b> ${object.comment}`;
             document.getElementById("comment-review" + i).innerHTML = `<b>高評価</b>: ${object.good}   <b>低評価</b>: ${object.bad}`;
         }
@@ -87,7 +99,19 @@
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];
             new_reply_num = reply_nums.shift();
-            document.getElementById("reply" + reply_num).innerHTML += `<p id="replyer${new_reply_num}"></p><p id="reply-review${new_reply_num}"></p><p><button id="reply-btn${new_reply_num}" onclick="selectReplies(${object.comment_id}, ${new_reply_num})">返信を表示</button><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
+
+            var count_sql = `select Parents.id from (Comments as Parents inner join Users on Parents.userid = Users.id) left join Comments as Childs on Parents.id = Childs.toid where Childs.toid = ${object.comment_id} and Childs.is_to_comment;`;
+            var counts = await osql.connect(count_sql);
+            if (counts.length > 0) {
+                document.getElementById("reply" + reply_num).innerHTML += `<p id="replyer${new_reply_num}"></p><p id="reply-review${new_reply_num}"></p><p><button id="reply-btn${new_reply_num}" onclick="selectReplies(${object.comment_id}, ${new_reply_num})">返信を表示</button></p><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
+            } else {
+                document.getElementById("reply" + reply_num).innerHTML += `<p id="replyer${new_reply_num}"></p><p id="reply-review${new_reply_num}"></p><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
+            }
+
+
+
+
+
             document.getElementById("replyer" + new_reply_num).innerHTML = `<b>${object.name}</b> ${object.comment}`;
             document.getElementById("reply-review" + new_reply_num).innerHTML = `<b>高評価</b>: ${object.good}   <b>低評価</b>: ${object.bad}`;
         }
