@@ -12,8 +12,8 @@
         osql.requireLogin();
 
         async function buttonPressed() {
-            var userid = document.getElementById('tf1').value;
-            var password = document.getElementById('tf2').value;
+            var userid = document.getElementById('id').value;
+            var password = document.getElementById('password').value;
 
             var sql = `select * from Users where id="${userid}";`;
             var objects = await osql.connect(sql);
@@ -26,6 +26,8 @@
                 return;
             }
 
+            console.log(objects[0].name);
+
             sessionStorage.setItem('userid', objects[0].id);
             sessionStorage.setItem('username', objects[0].name);
 
@@ -36,12 +38,12 @@
 </head>
 
 <body>
-    <h1>ユーザ管理　アプリケーション　v3</h1>
+    <h1>動画共有SNS</h1>
     <div>
         <h2>ログイン</h2>
-        ID: <input id="tf1" value="" type="text">
+        ID: <input id="id" type="text">
         <br> パスワード:
-        <input id="tf2" value="" type="password">
+        <input id="password" type="password">
         <br>
         <button onclick="buttonPressed()">ログイン</button>
         <p id="result"></p>

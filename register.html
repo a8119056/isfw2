@@ -16,31 +16,32 @@
         }
 
         async function execInsert() {
-            var userid = document.getElementById('tf1').value;
-            var username = document.getElementById('tf2').value;
-            var password = document.getElementById('tf3').value;
+            var userid = document.getElementById('id').value;
+            var username = document.getElementById('name').value;
+            var password = document.getElementById('password').value;
 
-            var sql = `insert into Users (id, name, password) values("${userid}", "${password}", "${username}");`;
+            var sql = `insert into Users (id, name, password) values("${userid}", "${username}", "${password}");`;
             var objects = await osql.connect(sql);
             console.log(objects);
 
-            document.getElementById('result').innerHTML = 'OK';
+            document.getElementById('result').innerHTML = 'ユーザ登録が完了しました';
         }
     </script>
 
 </head>
 
 <body>
-    <h1>User登録</h1>
+    <h1>ユーザ登録</h1>
     ID<br>
-    <input id="tf1" value="" type="text">
-    <br> 表示名 (必須ではありません)<br>
-    <input id="tf2" value="" type="text">
+    <input id="id" type="text">
+    <br> ユーザ名<br>
+    <input id="name" type="text">
     <br> パスワード<br>
-    <input id="tf3" value="" type="password">
+    <input id="password" type="password">
     <button onclick="button1Pressed()">登録</button>
     <br>
     <p id="result"></p>
+    <a href="index.html">もどる</a>
 </body>
 
 </html>
