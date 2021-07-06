@@ -42,12 +42,13 @@
         var count_sql = `select Videos.id from (Videos inner join Users on Videos.userid = Users.id) left join Comments on Videos.id = Comments.toid where Comments.toid = ${videoid} and !is_to_comment;`;
         var counts = await osql.connect(count_sql);
         if (counts.length > 0) {
-            document.getElementById("video").innerHTML = `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user"></p><p id="review"></p><p><button id="comment-btn" onclick="selectComments()">コメントを表示</button></p><p id="comment" style="margin-left: 40px;"></p>`;
+            document.getElementById("video").innerHTML = `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user"></p><p id="review"></p><p><button id="comment-btn" onclick="closeComments()">コメントを非表示</button></p><p id="comment" style="margin-left: 40px;"></p>`;
         } else {
             document.getElementById("video").innerHTML = `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user"></p><p id="review"></p><p id="comment">まだコメントはありません。</p>`;
         }
         document.getElementById("user").innerHTML = `<b>${object.name}</b> ${object.note}`;
         document.getElementById("review").innerHTML = `<b>高評価</b>: ${object.good}   <b>低評価</b>: ${object.bad}`;
+        selectComments();
     }
 
     async function selectComments() {
