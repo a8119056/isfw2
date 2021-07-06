@@ -15,7 +15,7 @@
     <p id="welcome">ようこそxxさん</p>
     <a href="usertop.html">もどる</a>
     <hr>
-    <div id="videos">
+    <div id="video">
     </div>
 
 </body>
@@ -32,16 +32,88 @@
     var username = sessionStorage.getItem("username");
     document.getElementById("welcome").innerHTML = "ようこそ" + username + "さん";
 
+    const reply_nums = [...Array(1024).keys()];
+
     async function doSelect() {
         var videoid = osql.getParam("videoid");
-        var sql = `select Videos.userid as videoid, url, note, Videos.good as video_good, Videos.bad as video_bad, name, Comments.userid as commenter_id, comment, Comments.good as comment_good, Comments.bad as comment_bad from (Videos inner join Users on Videos.userid = Users.id) left join Comments on Videos.id = Comments.toid where Videos.id = ${videoid};`;
+        var sql = `select userid, url, note, good, bad, name from Videos inner join Users on Videos.userid = Users.id where Videos.id = ${videoid};`;
+        var objects = await osql.connect(sql);
+        var object = objects[0];
+        document.getElementById("video").innerHTML += `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user"></p><p id="review"></p><p><button id="comment-btn" onclick="selectComments()">コメントを表示</button></p><p id="comment" style="margin-left: 40px;"></p>`;
+        document.getElementById("user").innerHTML = `<b>${object.name}</b> ${object.note}`;
+        document.getElementById("review").innerHTML = `<b>高評価</b>: ${object.good}   <b>低評価</b>: ${object.bad}`;
+    }
+
+    async function selectComments() {
+        var videoid = osql.getParam("videoid");
+        var sql = `select Videos.id as video_id, name, Comments.id as comment_id, Comments.userid as commenter_id, comment, Comments.good as good, Comments.bad as bad from (Videos inner join Users on Videos.userid = Users.id) left join Comments on Videos.id = Comments.toid where Comments.toid = ${videoid} and !is_to_comment;`;
         var objects = await osql.connect(sql);
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];
-            document.getElementById("videos").innerHTML += `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user${i}"></p><p id="review${i}"></p>`
-            document.getElementById("user" + i).innerHTML = `<b>${object.name}</b> ${object.note}`
-            document.getElementById("review" + i).innerHTML = `<b>高評価</b>: ${object.video_good}   <b>低評価</b>: ${object.video_bad}`
+            new_reply_num = reply_nums.shift();
+            document.getElementById("comment").innerHTML += `<p id="commenter${i}"></p><p id="comment-review${i}"></p><p><button id="reply-btn${new_reply_num}" onclick="selectReplies(${object.comment_id}, ${new_reply_num})">返信を表示</button><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
+            document.getElementById("commenter" + i).innerHTML = `<b>${object.name}</b> ${object.comment}`;
+            document.getElementById("comment-review" + i).innerHTML = `<b>高評価</b>: ${object.good}   <b>低評価</b>: ${object.bad}`;
         }
+        document.getElementById("comment-btn").innerHTML = "コメントを非表示";
+        $("#comment-btn").removeAttr("onclick");
+        $("#comment-btn").on("click", function() {
+            closeComments();
+        });
+    }
+
+    function closeComments() {
+        document.getElementById("comment").style.display = "none";
+        document.getElementById("comment-btn").innerHTML = "コメントを表示";
+        $("#comment-btn").removeAttr("onclick");
+        $("#comment-btn").on("click", function() {
+            openComments();
+        });
+    }
+
+
+    function openComments() {
+        document.getElementById("comment").style.display = "block";
+        document.getElementById("comment-btn").innerHTML = "コメントを非表示";
+        $("#comment-btn").removeAttr("onclick");
+        $("#comment-btn").on("click", function() {
+            closeComments();
+        });
+    }
+
+    async function selectReplies(toid, reply_num) {
+        var sql = `select name, Childs.userid as userid, Childs.id as comment_id, Childs.comment as comment, Childs.good as good, Childs.bad as bad from (Comments as Parents inner join Users on Parents.userid = Users.id) left join Comments as Childs on Parents.id = Childs.toid where Childs.toid = ${toid} and Childs.is_to_comment;`;
+        var objects = await osql.connect(sql);
+        for (let i = 0; i < objects.length; i++) {
+            object = objects[i];
+            new_reply_num = reply_nums.shift();
+            document.getElementById("reply" + reply_num).innerHTML += `<p id="replyer${new_reply_num}"></p><p id="reply-review${new_reply_num}"></p><p><button id="reply-btn${new_reply_num}" onclick="selectReplies(${object.comment_id}, ${new_reply_num})">返信を表示</button><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
+            document.getElementById("replyer" + new_reply_num).innerHTML = `<b>${object.name}</b> ${object.comment}`;
+            document.getElementById("reply-review" + new_reply_num).innerHTML = `<b>高評価</b>: ${object.good}   <b>低評価</b>: ${object.bad}`;
+        }
+        document.getElementById("reply-btn" + reply_num).innerHTML = "返信を非表示";
+        $("#reply-btn" + reply_num).removeAttr("onclick");
+        $("#reply-btn" + reply_num).on("click", function() {
+            closeReplies(reply_num);
+        });
+    }
+
+    function closeReplies(reply_num) {
+        document.getElementById("reply" + reply_num).style.display = "none";
+        document.getElementById("reply-btn" + reply_num).innerHTML = "返信を表示";
+        $("#reply-btn" + reply_num).removeAttr("onclick");
+        $("#reply-btn" + reply_num).on("click", function() {
+            openReplies(reply_num);
+        });
+    }
+
+    function openReplies(reply_num) {
+        document.getElementById("reply" + reply_num).style.display = "block";
+        document.getElementById("reply-btn" + reply_num).innerHTML = "返信を非表示";
+        $("#reply-btn" + reply_num).removeAttr("onclick");
+        $("#reply-btn" + reply_num).on("click", function() {
+            closeReplies(reply_num);
+        });
     }
 </script>
 
