@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <script type="text/javascript" src="lib/jquery.min.js"></script>
+    <script type="text/javascript" src="lib/osql.js"></script>
+
+</head>
+
+<body>
+    <h1>ユーザ登録情報</h1>
+    <a href="usertop.html">もどる</a>
+    <hr>
+    <table border="1">
+        <tr>
+            <td>ID</td>
+            <td id="id"></td>
+        </tr>
+        <tr>
+            <td>ユーザ名</td>
+            <td id="name"></td>
+        </tr>
+        <tr>
+            <td>パスワード</td>
+            <td id="password">****</td>
+        </tr>
+        <tr>
+            <td>プロフィール</td>
+            <td id="bio"></td>
+        </tr>
+    </table>
+    <h3>プロフィール更新</h3>
+    <textarea id="new-bio" rows="5" cols="60" placeholder="自由に自分をアピールしましょう！(無記入可)"></textarea>
+    <button onclick="updateBiography()">更新</button>
+
+</body>
+<script>
+    $().ready(function() {
+        init();
+    });
+
+    function init() {
+        doSelect();
+    }
+
+    osql.requireLogin();
+
+    async function doSelect() {
+        var userid = sessionStorage.getItem("userid");
+        var sql = "select * from Users";
+        var objects = await osql.connect(sql);
+        var object = objects[0];
+        document.getElementById("id").innerHTML = object.id;
+        document.getElementById("name").innerHTML = object.name;
+        document.getElementById("bio").innerHTML = object.bio;
+        document.getElementById("new-bio").innerHTML = object.bio;
+    }
+
+    async function updateBiography() {
+        var userid = sessionStorage.getItem("userid");
+        var bio = document.getElementById("new-bio").value;
+        var sql = `update Users set bio = "${bio}" where id = "${userid}";`;
+        var objects = await osql.connect(sql);
+        doSelect();
+    }
+</script>
+
+</html>
