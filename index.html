@@ -33,7 +33,7 @@
         var userid = document.getElementById("id").value;
         var password = document.getElementById("password").value;
 
-        var sql = `select password from Users where id="${userid}";`;
+        var sql = `select id, name, password from Users where id="${userid}";`;
         var objects = await osql.connect(sql);
         if (objects.length < 1) {
             document.getElementById("result").innerHTML = "ログイン失敗: ユーザが見つかりません";
