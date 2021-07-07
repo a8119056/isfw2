@@ -61,7 +61,7 @@
             if (object.userid === userid) {
                 document.getElementById("videos").innerHTML += `<p><button onclick="doDelete(${object.videoid})">削除</button></p>`
             }
-            document.getElementById("user" + i).innerHTML = `<b>${object.name}</b> ${object.note}`
+            document.getElementById("user" + i).innerHTML = `<a href="profile.html?userid=${object.userid}">${object.name}</a> ${object.note}`
             document.getElementById("review" + i).innerHTML = `👍 ${object.good}    👎 ${object.bad}`
         }
     }

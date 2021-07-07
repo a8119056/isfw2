@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <script type="text/javascript" src="lib/jquery.min.js"></script>
+    <script type="text/javascript" src="lib/osql.js"></script>
+
+</head>
+
+<body>
+    <h1 id="profile-header">**</h1>
+    <a href="usertop.html">もどる</a>
+    <hr>
+    <p id="bio"></p>
+    <h2>投稿一覧</h2>
+    <div id="videos">まだ投稿がありません</div>
+
+</body>
+<script>
+    $().ready(function() {
+        init();
+    });
+
+    function init() {
+        selectProfile();
+        selectVideos();
+    }
+
+    osql.requireLogin();
+
+    async function selectProfile() {
+        var userid = osql.getParam("userid");
+        var sql = `select name, bio from Users where id = "${userid}"`;
+        var objects = await osql.connect(sql);
+        var object = objects[0];
+        document.getElementById("profile-header").innerHTML = object.name;
+        document.getElementById("bio").innerHTML = object.bio;
+    }
+
+    async function selectVideos() {
+        var login_id = sessionStorage.getItem("userid");
+        var poster_id = osql.getParam("userid");
+        var sql = `select Videos.id as videoid, url, note, good, bad, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id where userid = "${poster_id}";`;
+        var objects = await osql.connect(sql);
+        for (let i = 0; i < objects.length; i++) {
+            object = objects[i];
+            if (i < 1) {
+                document.getElementById("videos").innerHTML = `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user${i}"></p><p id="review${i}"></p><p><a href="detail.html?videoid=${object.videoid}">詳細</a></p>`;
+            } else {
+                document.getElementById("videos").innerHTML += `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user${i}"></p><p id="review${i}"></p><p><a href="detail.html?videoid=${object.videoid}">詳細</a></p>`;
+            }
+            if (object.userid === login_id) {
+                document.getElementById("videos").innerHTML += `<p><button onclick="doDelete(${object.videoid})">削除</button></p>`
+            }
+            document.getElementById("user" + i).innerHTML = `<a href="profile.html?userid=${object.userid}">${object.name}</a> ${object.note}`
+            document.getElementById("review" + i).innerHTML = `👍 ${object.good}    👎 ${object.bad}`
+        }
+    }
+</script>
+
+</html>
