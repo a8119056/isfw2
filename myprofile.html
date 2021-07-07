@@ -50,7 +50,7 @@
 
     async function doSelect() {
         var userid = sessionStorage.getItem("userid");
-        var sql = "select * from Users";
+        var sql = `select * from Users where id = "${userid}"`;
         var objects = await osql.connect(sql);
         var object = objects[0];
         document.getElementById("id").innerHTML = object.id;

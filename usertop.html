@@ -37,6 +37,8 @@
 
     function init() {
         var username = sessionStorage.getItem("username");
+        var userid = sessionStorage.getItem("userid");
+        sessionStorage.setItem("userid", userid);
         document.getElementById("welcome").innerHTML = "ようこそ" + username + "さん";
         doSelect();
     }
