@@ -37,8 +37,6 @@
 
     function init() {
         var username = sessionStorage.getItem("username");
-        var userid = sessionStorage.getItem("userid");
-        sessionStorage.setItem("userid", userid);
         document.getElementById("welcome").innerHTML = "ようこそ" + username + "さん";
         doSelect();
     }
@@ -64,7 +62,7 @@
                 document.getElementById("videos").innerHTML += `<p><button onclick="doDelete(${object.videoid})">削除</button></p>`
             }
             document.getElementById("user" + i).innerHTML = `<b>${object.name}</b> ${object.note}`
-            document.getElementById("review" + i).innerHTML = `<b>高評価</b>: ${object.good}   <b>低評価</b>: ${object.bad}`
+            document.getElementById("review" + i).innerHTML = `👍 ${object.good}    👎 ${object.bad}`
         }
     }
 
@@ -78,6 +76,8 @@
             await osql.connect(sql);
             document.getElementById("result").innerHTML = "投稿しました";
             doSelect();
+            document.getElementById("url").value = "";
+            document.getElementById("note").value = "";
         } else {
             document.getElementById("result").innerHTML = "正しいURLを入力してください";
         }
