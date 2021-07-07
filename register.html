@@ -35,7 +35,7 @@
 
         var check_sql = `select id from Users where id = "${userid}";`;
         var check_objects = await osql.connect(check_sql);
-        if (userid.length === 0 || username.length === 0 || password.length === 0) {
+        if (userid.length < 1 || username.length < 1 || password.length < 1) {
             document.getElementById("result").innerHTML = "登録失敗: すべての項目を入力してください";
         } else if (check_objects.length > 0) {
             document.getElementById("result").innerHTML = "登録失敗: そのIDはすでに使われています";
