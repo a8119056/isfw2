@@ -32,9 +32,19 @@
             <td id="bio"></td>
         </tr>
     </table>
+    <p id="result"><br></p>
+    <h3>ユーザ名変更</h3>
+    <input id="new-name" type="text"></input>
+    <button onclick="changeName()">変更</button>
     <h3>プロフィール更新</h3>
-    <textarea id="new-bio" rows="5" cols="60" placeholder="自由に自分をアピールしましょう！(無記入可)"></textarea>
+    <textarea id="new-bio" rows="4" cols="60" placeholder="自由に自分をアピールしましょう！(無記入可)"></textarea>
     <button onclick="updateBiography()">更新</button>
+    <br>
+    <h3>パスワード変更</h3>
+    現在のパスワード<br>
+    <input id="old-password" type="password"></input><br> 新しいパスワード<br>
+    <input id="new-password" type="password"></input>
+    <button onclick="changePassword()">変更</button>
 
 </body>
 <script>
@@ -59,12 +69,60 @@
         document.getElementById("new-bio").innerHTML = object.bio;
     }
 
+    async function changeName() {
+        var userid = sessionStorage.getItem("userid");
+        var new_name = document.getElementById("new-name").value;
+        var sql = `update Users set name = "${new_name}" where id = "${userid}";`;
+        var objects = await osql.connect(sql);
+
+        if (new_name.length < 1) {
+            document.getElementById("result").innerHTML = "変更失敗: ユーザ名を入力してください";
+        }　
+        else {
+            document.getElementById("result").innerHTML = "ユーザ名を変更しました";
+            sessionStorage.setItem("username", new_name);
+            doSelect();
+        }
+    }
+
     async function updateBiography() {
         var userid = sessionStorage.getItem("userid");
-        var bio = document.getElementById("new-bio").value;
-        var sql = `update Users set bio = "${bio}" where id = "${userid}";`;
+        var new_bio = document.getElementById("new-bio").value;
+        var sql = `update Users set bio = "${new_bio}" where id = "${userid}";`;
         var objects = await osql.connect(sql);
+
+        document.getElementById("result").innerHTML = 　"プロフィールを変更しました";
         doSelect();
+    }
+
+    async function changePassword() {
+        var userid = sessionStorage.getItem("userid");
+        var old_password = document.getElementById("old-password").value;
+        var new_password = document.getElementById("new-password").value;
+        if (old_password.length < 1 && new_password < 1) {
+            document.getElementById("result").innerHTML = "変更失敗: パスワードを入力してください";
+        } else if (old_password.length < 1) {
+            document.getElementById("result").innerHTML = "変更失敗: 現在のパスワードを入力してください";
+        } else if (new_password < 1) {
+            document.getElementById("result").innerHTML = "変更失敗: 新しいパスワードを入力してください";
+        } else {
+            var check_sql = `select password from Users where id = "${userid}";`;
+            var check_objects = await osql.connect(check_sql);
+            if (check_objects[0].password != old_password) {
+                document.getElementById("result").innerHTML = "変更失敗: 現在のパスワードが間違っています";
+            } else {
+                if (old_password === new_password) {
+                    document.getElementById("result").innerHTML = "変更失敗: 新旧のパスワードが同一です";
+                } else {
+                    var sql = `update Users set password = "${new_password}" where id = "${userid}";`;
+                    var isConfirmed = window.confirm("パスワードを変更してよろしいですか？");
+                    if (isConfirmed) {
+                        var objects = await osql.connect(sql);
+                        document.getElementById("result").innerHTML = "パスワードを変更しました";
+                    }
+                }
+            }
+        }
     }
 </script>
 
