@@ -12,9 +12,11 @@
 
 <body>
     <h1 id="profile-header">**</h1>
-    <a href="usertop.html">もどる</a>
+    <a href="javascript:history.back()">もどる</a>
+    <a href="usertop.html">トップページへ</a>
     <hr>
     <p id="bio"></p>
+    <div id="follow"></div>
     <h2>投稿一覧</h2>
     <div id="videos">まだ投稿がありません</div>
 
@@ -26,6 +28,7 @@
 
     function init() {
         selectProfile();
+        selectFollows();
         selectVideos();
     }
 
@@ -38,6 +41,48 @@
         var object = objects[0];
         document.getElementById("profile-header").innerHTML = object.name;
         document.getElementById("bio").innerHTML = object.bio;
+    }
+
+    async function selectFollows() {
+        var userid = osql.getParam("userid");
+        var following_sql = `select fromid, FromUsers.name as from_name, toid, ToUsers.name as to_name from (Users as FromUsers inner join Follows on FromUsers.id = Follows.fromid) inner join Users as ToUsers on Follows.toid = ToUsers.id where fromid = "${userid}";`;
+        var follower_sql = `select fromid, FromUsers.name as from_name, toid, ToUsers.name as to_name from (Users as FromUsers inner join Follows on FromUsers.id = Follows.fromid) inner join Users as ToUsers on Follows.toid = ToUsers.id where toid = "${userid}";`;
+        var followings = await osql.connect(following_sql);
+        var followers = await osql.connect(follower_sql);
+        var table = "";
+        if (followings.length > 0) {
+            table += "<table border='1'>";
+            table += "<th>フォロー</th><th>フォロワー</th>"
+            if (followings.length > followers.length) {
+                for (var i = 0; i < followings.length; i++) {
+                    var following = followings[i];
+                    var follower = followers[i];
+                    table += "<tr>";
+                    table += `<td><a href="profile.html?userid=${following.toid}">${following.to_name}</a></td>`;
+                    if (follower) {
+                        table += `<td><a href="profile.html?userid=${follower.fromid}">${follower.from_name}</a></td>`;
+                    } else {
+                        table += `<td></td>`;
+                    }
+                    table += "</tr>";
+                }
+            } else {
+                for (var i = 0; i < followers.length; i++) {
+                    var following = followings[i];
+                    var follower = followers[i];
+                    table += "<tr>";
+                    if (following) {
+                        table += `<td><a href="profile.html?userid=${following.toid}">${following.to_name}</a></td>`;
+                    } else {
+                        table += `<td></td>`;
+                    }
+                    table += `<td><a href="profile.html?userid=${follower.fromid}">${follower.from_name}</a></td>`;
+                    table += "</tr>";
+                }
+            }
+            table += "</table>";
+        }
+        document.getElementById("follow").innerHTML = table;
     }
 
     async function selectVideos() {
