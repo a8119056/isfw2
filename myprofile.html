@@ -73,12 +73,12 @@
         var userid = sessionStorage.getItem("userid");
         var new_name = document.getElementById("new-name").value;
         var sql = `update Users set name = "${new_name}" where id = "${userid}";`;
-        var objects = await osql.connect(sql);
 
         if (new_name.length < 1) {
             document.getElementById("result").innerHTML = "変更失敗: ユーザ名を入力してください";
         }　
         else {
+            await osql.connect(sql);
             document.getElementById("result").innerHTML = "ユーザ名を変更しました";
             sessionStorage.setItem("username", new_name);
             doSelect();
@@ -89,8 +89,7 @@
         var userid = sessionStorage.getItem("userid");
         var new_bio = document.getElementById("new-bio").value;
         var sql = `update Users set bio = "${new_bio}" where id = "${userid}";`;
-        var objects = await osql.connect(sql);
-
+        await osql.connect(sql);
         document.getElementById("result").innerHTML = 　"プロフィールを変更しました";
         doSelect();
     }
@@ -117,7 +116,7 @@
                     var sql = `update Users set password = "${new_password}" where id = "${userid}";`;
                     var isConfirmed = window.confirm("パスワードを変更してよろしいですか？");
                     if (isConfirmed) {
-                        var objects = await osql.connect(sql);
+                        await osql.connect(sql);
                         document.getElementById("result").innerHTML = "パスワードを変更しました";
                     }
                 }
