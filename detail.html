@@ -12,8 +12,8 @@
 
 <body>
     <h1>詳細</h1>
-    <p id="welcome">ようこそxxさん</p>
-    <a href="usertop.html">もどる</a>
+    <a href="javascript:history.back()">もどる</a>
+    <a href="usertop.html">トップページへ</a>
     <hr>
     <div id="video"></div>
 
@@ -25,8 +25,6 @@
 
     function init() {
         doSelect();
-        var username = sessionStorage.getItem("username");
-        document.getElementById("welcome").innerHTML = "ようこそ" + username + "さん";
     }
 
     osql.requireLogin();
@@ -88,7 +86,7 @@
             if (counts.length > 0) {
                 document.getElementById("comment").innerHTML += `<p id="commenter${i}"></p><p id="comment-review${i}"></p><p id="post-reply${new_reply_num}"><button onclick="showReplyForm(${object.comment_id}, ${new_reply_num})">返信する</button> <button id="reply-btn${new_reply_num}" onclick="selectReplies(${object.comment_id}, ${new_reply_num})">返信を表示</button></p><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
             } else {
-                document.getElementById("comment").innerHTML += `<p id="commenter${i}"></p><p id="comment-review${i}"></p><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
+                document.getElementById("comment").innerHTML += `<p id="commenter${i}"></p><p id="comment-review${i}"></p><p id="post-reply${new_reply_num}"><button onclick="showReplyForm(${object.comment_id}, ${new_reply_num})">返信する</button></p><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
             }
             document.getElementById("commenter" + i).innerHTML = `<b>${object.name}</b> ${object.comment}`;
             if (userid === object.commenter_id) {
@@ -135,7 +133,7 @@
             if (counts.length > 0) {
                 document.getElementById("reply" + reply_num).innerHTML += `<p id="replier${new_reply_num}"></p><p id="reply-review${new_reply_num}"></p><p id="post-reply${new_reply_num}"><button onclick="showReplyForm(${object.reply_id}, ${new_reply_num})">返信する</button> <button id="reply-btn${new_reply_num}" onclick="selectReplies(${object.reply_id}, ${new_reply_num})">返信を表示</button></p><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
             } else {
-                document.getElementById("reply" + reply_num).innerHTML += `<p id="replier${new_reply_num}"></p><p id="reply-review${new_reply_num}"></p><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
+                document.getElementById("reply" + reply_num).innerHTML += `<p id="replier${new_reply_num}"></p><p id="reply-review${new_reply_num}"></p><p id="post-reply${new_reply_num}"><button onclick="showReplyForm(${object.reply_id}, ${new_reply_num})">返信する</button></p><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
             }
             document.getElementById("replier" + new_reply_num).innerHTML = `<b>${object.name}</b> ${object.comment}`;
             if (userid === object.replier_id) {
