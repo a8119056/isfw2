@@ -12,11 +12,13 @@
 
 <body>
     <h1 id="profile-header">**</h1>
+    <p id="bio"></p>
+    <p id="counts">フォロー: 0人 フォロワー: 0人</p>
+    <button id="list-btn" onclick="selectFollows()">一覧を表示</button><br><br>
+    <div id="follow"></div>
     <a href="javascript:history.back()">もどる</a>
     <a href="usertop.html">トップページへ</a>
     <hr>
-    <p id="bio"></p>
-    <div id="follow"></div>
     <h2>投稿一覧</h2>
     <div id="videos">まだ投稿がありません</div>
 
@@ -28,7 +30,7 @@
 
     function init() {
         selectProfile();
-        selectFollows();
+        selectFollowCounts();
         selectVideos();
     }
 
@@ -43,6 +45,17 @@
         document.getElementById("bio").innerHTML = object.bio;
     }
 
+    async function selectFollowCounts() {
+        var userid = osql.getParam("userid");
+        var sql = `select count(*) as count from (Users as FromUsers inner join Follows on FromUsers.id = Follows.fromid) inner join Users as ToUsers on Follows.toid = ToUsers.id where fromid = "${userid}" union select count(*) from (Users as FromUsers inner join Follows on FromUsers.id = Follows.fromid) inner join Users as ToUsers on Follows.toid = ToUsers.id where toid = "${userid}";`;
+        var objects = await osql.connect(sql);
+        var counts = {
+            "following": objects[0].count,
+            "followers": objects[1].count
+        }
+        document.getElementById("counts").innerHTML = `フォロー: ${counts.following}人 フォロワー: ${counts.followers}人`;
+    }
+
     async function selectFollows() {
         var userid = osql.getParam("userid");
         var following_sql = `select fromid, FromUsers.name as from_name, toid, ToUsers.name as to_name from (Users as FromUsers inner join Follows on FromUsers.id = Follows.fromid) inner join Users as ToUsers on Follows.toid = ToUsers.id where fromid = "${userid}";`;
@@ -51,7 +64,7 @@
         var followers = await osql.connect(follower_sql);
         var table = "";
         if (followings.length > 0) {
-            table += "<table border='1'>";
+            table += "<table border='1' style='margin-bottom: 18px'>";
             table += "<th>フォロー</th><th>フォロワー</th>"
             if (followings.length > followers.length) {
                 for (var i = 0; i < followings.length; i++) {
@@ -83,6 +96,29 @@
             table += "</table>";
         }
         document.getElementById("follow").innerHTML = table;
+        document.getElementById("list-btn").innerHTML = "一覧を非表示";
+        $("#list-btn").removeAttr("onclick");
+        $("#list-btn").on("click", function() {
+            hideFollows();
+        });
+    }
+
+    async function hideFollows() {
+        document.getElementById("follow").style.display = "none";
+        document.getElementById("list-btn").innerHTML = "一覧を表示"
+        $("#list-btn").removeAttr("onclick");
+        $("#list-btn").on("click", function() {
+            showFollows();
+        });
+    }
+
+    async function showFollows() {
+        document.getElementById("follow").style.display = "block";
+        document.getElementById("list-btn").innerHTML = "一覧を非表示"
+        $("#list-btn").removeAttr("onclick");
+        $("#list-btn").on("click", function() {
+            hideFollows();
+        });
     }
 
     async function selectVideos() {
