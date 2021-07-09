@@ -4,6 +4,8 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+
 
     <script type="text/javascript" src="lib/jquery.min.js"></script>
     <script type="text/javascript" src="lib/osql.js"></script>
@@ -11,83 +13,91 @@
 </head>
 
 <body>
-    <h1>ユーザトップ</h1>
-    <p id="welcome">ようこそxxさん</p>
-    <a href="myprofile.html">ユーザ登録情報へ</a><br>
-    <a href="index.html">もどる</a>
-    <a href="index.html" onclick="logout()">ログアウト</a>
-    <hr>
-    <div style="margin-bottom: 20px;">
-        <h3>投稿する</h3>
-        <p id="result"></p>
-        <form>
-            URL<br>
-            <input id="url" type="text" required><br>コメント<br>
-            <input id="note" type="text" placeholder="省略可">
-            <button type="button" onclick="post()">送信</button>
-        </form>
-    </div>
-    <div id="videos">該当する投稿がありません</div>
 
-</body>
-<script>
-    $().ready(function() {
-        init();
-    });
+    <body class="bg-light">
+        <header class="m-3">
+            <h1>ユーザトップ</h1>
+            <p id="welcome">ようこそxxさん</p>
+            <a href="myprofile.html" class="btn btn-primary m-1">ユーザ登録情報へ</a>
+            <a href="index.html" class="btn btn-primary m-1">もどる</a><br>
+            <a href="index.html" class="btn btn-secondary m-1" onclick="logout()">ログアウト</a><br>
+        </header>
+        <hr>
+        <div class="container m-1">
+            <h3>投稿する</h3>
+            <p id="result"></p>
+            <form>
+                URL<br>
+                <input id="url" type="text" required><br>コメント<br>
+                <input id="note" type="text" placeholder="省略可">
+                <button type="button" class="btn btn-sm btn-primary" onclick="post()">送信</button>
+            </form>
+            <br>
+            <div id="videos">該当する投稿がありません</div>
+        </div>
+    </body>
 
-    function init() {
-        var username = sessionStorage.getItem("username");
-        document.getElementById("welcome").innerHTML = "ようこそ" + username + "さん";
-        doSelect();
-    }
+    <script>
+        $().ready(function() {
+            init();
+        });
 
-    function logout() {
-        osql.logout();
-    }
-
-    osql.requireLogin();
-
-    async function doSelect() {
-        var userid = sessionStorage.getItem("userid");
-        var sql = "select Videos.id as videoid, url, note, good, bad, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id;";
-        var objects = await osql.connect(sql);
-        for (let i = 0; i < objects.length; i++) {
-            object = objects[i];
-            if (i < 1) {
-                document.getElementById("videos").innerHTML = `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user${i}"></p><p id="review${i}"></p><p><a href="detail.html?videoid=${object.videoid}">詳細</a></p>`;
-            } else {
-                document.getElementById("videos").innerHTML += `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user${i}"></p><p id="review${i}"></p><p><a href="detail.html?videoid=${object.videoid}">詳細</a></p>`;
-            }
-            if (object.userid === userid) {
-                document.getElementById("videos").innerHTML += `<p><button onclick="doDelete(${object.videoid})">削除</button></p>`
-            }
-            document.getElementById("user" + i).innerHTML = `<a href="profile.html?userid=${object.userid}">${object.name}</a> ${object.note}`
-            document.getElementById("review" + i).innerHTML = `👍 ${object.good}    👎 ${object.bad}`
-        }
-    }
-
-    async function post() {
-        var url = document.getElementById("url").value;
-        var youtube_id = url.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/);
-        if (youtube_id != null && youtube_id[1].length === 11) {
-            var userid = sessionStorage.getItem("userid");
-            var note = document.getElementById("note").value;
-            var sql = `insert into Videos (userid, url, note) values ("${userid}", "${youtube_id[1]}", "${note}");`;
-            await osql.connect(sql);
-            document.getElementById("result").innerHTML = "投稿しました";
+        function init() {
+            var username = sessionStorage.getItem("username");
+            document.getElementById("welcome").innerHTML = "ようこそ" + username + "さん";
             doSelect();
-            document.getElementById("url").value = "";
-            document.getElementById("note").value = "";
-        } else {
-            document.getElementById("result").innerHTML = "正しいURLを入力してください";
         }
-    }
 
-    async function doDelete(videoid) {
-        var sql = `delete from Videos where id = ${videoid};`;
-        await osql.connect(sql);
-        doSelect();
-    }
-</script>
+        function logout() {
+            osql.logout();
+        }
+
+        osql.requireLogin();
+
+        async function doSelect() {
+            var userid = sessionStorage.getItem("userid");
+            var sql = "select Videos.id as videoid, url, note, good, bad, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id;";
+            var objects = await osql.connect(sql);
+            for (let i = 0; i < objects.length; i++) {
+                object = objects[i];
+                if (i < 1) {
+                    document.getElementById("videos").innerHTML = `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user${i}"></p><p id="review${i}"></p><p><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></p>`;
+                } else {
+                    document.getElementById("videos").innerHTML += `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user${i}"></p><p id="review${i}"></p><p><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></p>`;
+                }
+                if (object.userid === userid) {
+                    document.getElementById("videos").innerHTML += `<p><button type="button" class="btn btn-sm btn-danger" onclick="doDelete(${object.videoid})">削除</button></p>`
+                }
+                document.getElementById("user" + i).innerHTML = `<a href="profile.html?userid=${object.userid}" class="fs-3 link-dark">${object.name}</a> <span class="m-3 fs-5">${object.note}<span>`
+                document.getElementById("review" + i).innerHTML = `👍 ${object.good} <span class="m-3">👎 ${object.bad}</span>`
+            }
+        }
+
+        async function post() {
+            var url = document.getElementById("url").value;
+            var youtube_id = url.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/);
+            if (youtube_id != null && youtube_id[1].length === 11) {
+                var userid = sessionStorage.getItem("userid");
+                var note = document.getElementById("note").value;
+                var sql = `insert into Videos (userid, url, note) values ("${userid}", "${youtube_id[1]}", "${note}");`;
+                await osql.connect(sql);
+                document.getElementById("result").innerHTML = "投稿しました";
+                doSelect();
+                document.getElementById("url").value = "";
+                document.getElementById("note").value = "";
+            } else {
+                document.getElementById("result").innerHTML = `<span class="text-danger">*</span>正しいURLを入力してください`;
+            }
+        }
+
+        async function doDelete(videoid) {
+            var sql = `delete from Videos where id = ${videoid};`;
+            var isConfirmed = window.confirm("投稿を削除してよろしいですか？");
+            if (isConfirmed) {
+                await osql.connect(sql);
+                doSelect();
+            }
+        }
+    </script>
 
 </html>
