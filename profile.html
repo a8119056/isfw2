@@ -12,7 +12,8 @@
 
 <body>
     <h1 id="profile-header">**</h1>
-    <div id="follow"><button id="follow-btn" onclick="follow('')">フォローする</button></div>
+    <div id="follow"><button id=follow-btn onclick="follow()">フォローする</button></div>
+    <div id="unfollow"><button id=unfollow-btn onclick="unfollow()">フォロー解除</button></div>
     <p id="bio"></p>
     <p id="counts">フォロー: 0人 フォロワー: 0人</p>
     <button id="list-btn" onclick="selectFollows()">一覧を表示</button><br><br>
@@ -41,14 +42,16 @@
     async function checkFollow() {
         var fromid = sessionStorage.getItem("userid");
         var toid = osql.getParam("userid");
-        var sql = `select * from Follows where fromid = "${fromid}" and toid = "${toid}"`;
-        var objects = await osql.connect(sql);
-        if (objects.length > 0) {
-            document.getElementById("follow-btn").innerHTML = "フォロー解除";
-            $("#follow-btn").removeAttr("onclick");
-            $("#follow-btn").on("click", function() {
-                unfollow();
-            });
+        if (fromid != toid) {
+            var sql = `select * from Follows where fromid = "${fromid}" and toid = "${toid}"`;
+            var objects = await osql.connect(sql);
+            if (objects.length > 0) {
+                document.getElementById("follow").style.display = "none";
+            } else {
+                document.getElementById("unfollow").style.display = "none";
+            }
+        } else {
+            document.getElementById("follow").innerHTML = "";
         }
     }
 
@@ -57,11 +60,9 @@
         var toid = osql.getParam("userid");
         var sql = `insert into Follows values ("${fromid}", "${toid}")`;
         await osql.connect(sql);
-        $("#follow-btn").removeAttr("onclick");
-        $("#follow-btn").on("click", function() {
-            unfollow();
-        });
-        document.getElementById("follow-btn").innerHTML = "フォロー解除";
+        console.log(sql);
+        document.getElementById("follow").style.display = "none";
+        document.getElementById("unfollow").style.display = "block";
         selectFollowCounts();
         selectFollows();
     }
@@ -71,13 +72,15 @@
         var toid = osql.getParam("userid");
         var sql = `delete from Follows where fromid = "${fromid}" and toid = "${toid}"`;
         await osql.connect(sql);
-        $("#follow-btn").removeAttr("onclick");
-        $("#follow-btn").on("click", function() {
-            follow();
-        });
-        document.getElementById("follow-btn").innerHTML = "フォローする";
+        console.log(sql);
+        document.getElementById("unfollow").style.display = "none";
+        document.getElementById("follow").style.display = "block";
         selectFollowCounts();
         selectFollows();
+    }
+
+    async function execUnfollow() {
+
     }
 
     async function selectProfile() {
