@@ -12,10 +12,11 @@
 
 <body>
     <h1 id="profile-header">**</h1>
+    <div id="follow"><button id="follow-btn" onclick="follow('')">フォローする</button></div>
     <p id="bio"></p>
     <p id="counts">フォロー: 0人 フォロワー: 0人</p>
     <button id="list-btn" onclick="selectFollows()">一覧を表示</button><br><br>
-    <div id="follow"></div>
+    <div id="follow-list"></div>
     <a href="javascript:history.back()">もどる</a>
     <a href="usertop.html">トップページへ</a>
     <hr>
@@ -29,12 +30,55 @@
     });
 
     function init() {
+        checkFollow();
         selectProfile();
         selectFollowCounts();
         selectVideos();
     }
 
     osql.requireLogin();
+
+    async function checkFollow() {
+        var fromid = sessionStorage.getItem("userid");
+        var toid = osql.getParam("userid");
+        var sql = `select * from Follows where fromid = "${fromid}" and toid = "${toid}"`;
+        var objects = await osql.connect(sql);
+        if (objects.length > 0) {
+            document.getElementById("follow-btn").innerHTML = "フォロー解除";
+            $("#follow-btn").removeAttr("onclick");
+            $("#follow-btn").on("click", function() {
+                unfollow();
+            });
+        }
+    }
+
+    async function follow() {
+        var fromid = sessionStorage.getItem("userid");
+        var toid = osql.getParam("userid");
+        var sql = `insert into Follows values ("${fromid}", "${toid}")`;
+        await osql.connect(sql);
+        $("#follow-btn").removeAttr("onclick");
+        $("#follow-btn").on("click", function() {
+            unfollow();
+        });
+        document.getElementById("follow-btn").innerHTML = "フォロー解除";
+        selectFollowCounts();
+        selectFollows();
+    }
+
+    async function unfollow() {
+        var fromid = sessionStorage.getItem("userid");
+        var toid = osql.getParam("userid");
+        var sql = `delete from Follows where fromid = "${fromid}" and toid = "${toid}"`;
+        await osql.connect(sql);
+        $("#follow-btn").removeAttr("onclick");
+        $("#follow-btn").on("click", function() {
+            follow();
+        });
+        document.getElementById("follow-btn").innerHTML = "フォローする";
+        selectFollowCounts();
+        selectFollows();
+    }
 
     async function selectProfile() {
         var userid = osql.getParam("userid");
@@ -95,7 +139,7 @@
             }
             table += "</table>";
         }
-        document.getElementById("follow").innerHTML = table;
+        document.getElementById("follow-list").innerHTML = table;
         document.getElementById("list-btn").innerHTML = "一覧を非表示";
         $("#list-btn").removeAttr("onclick");
         $("#list-btn").on("click", function() {
@@ -104,7 +148,7 @@
     }
 
     async function hideFollows() {
-        document.getElementById("follow").style.display = "none";
+        document.getElementById("follow-list").style.display = "none";
         document.getElementById("list-btn").innerHTML = "一覧を表示"
         $("#list-btn").removeAttr("onclick");
         $("#list-btn").on("click", function() {
@@ -113,7 +157,7 @@
     }
 
     async function showFollows() {
-        document.getElementById("follow").style.display = "block";
+        document.getElementById("follow-list").style.display = "block";
         document.getElementById("list-btn").innerHTML = "一覧を非表示"
         $("#list-btn").removeAttr("onclick");
         $("#list-btn").on("click", function() {
