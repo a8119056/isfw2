@@ -86,7 +86,7 @@
 
     async function doSelect() {
         var userid = sessionStorage.getItem("userid");
-        var sql = "select Videos.id as videoid, url, note, good, bad, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id;";
+        var sql = "select Videos.id as videoid, url, note, good, bad, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id order by videoid desc;";
         var objects = await osql.connect(sql);
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];

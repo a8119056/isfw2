@@ -4,6 +4,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
     <script type="text/javascript" src="lib/jquery.min.js"></script>
@@ -26,7 +27,7 @@
         <div id="unfollow">
             <button id="unfollow-btn" type="button" class="btn btn-info my-2 text-light" onclick="unfollow()">フォロー解除</button>
         </div>
-        <div class="card bg-light border-dark my-4">
+        <div class="card bg-light border-dark my-4 me-3">
             <h4 class="card-header border-dark text-dark">プロフィール</h4>
             <div class="card-body" id="bio"></div>
         </div>
@@ -183,7 +184,7 @@
     async function selectVideos() {
         var login_id = sessionStorage.getItem("userid");
         var poster_id = osql.getParam("userid");
-        var sql = `select Videos.id as videoid, url, note, good, bad, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id where userid = "${poster_id}";`;
+        var sql = `select Videos.id as videoid, url, note, good, bad, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id where userid = "${poster_id}" order by videoid desc;;`;
         var objects = await osql.connect(sql);
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];
