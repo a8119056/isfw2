@@ -10,36 +10,42 @@
     <script type="text/javascript" src="lib/osql.js"></script>
 </head>
 
-<body>
-    <div class="container">
-        <div class="position-absolute top-50 start-50 translate-middle w-75">
-            <div class="card border-dark border-2 rounded-3">
-                <div class="card-body mx-4 mt-3 mb-2">
-                    <h2 class="card-title text-center mb-3">ユーザ登録</h2>
-                    <p id="result"><br></p>
-                    <div class="mb-4">
-                        <label>ID</label>
-                        <input id="id" type="text" class="form-control">
-                        <p class="form-text">IDは後から変更できないので注意してください</p>
-                    </div>
-                    <div class="mb-4">
-                        <label>ユーザ名</label>
-                        <input id="name" type="text" class="form-control">
-                    </div>
-                    <div class="mb-4">
-                        <label>パスワード</label>
-                        <input id="password" type="password" class="form-control">
-                    </div>
-                    <div id="register" class="text-center">
-                        <button type="button" class="btn btn-success" onclick="register()">登録</button>
-                    </div>
+<body class="bg-light">
+    <div class="position-absolute top-50 start-50 translate-middle w-75">
+        <div class="card border-dark bg-light border-2 rounded-3">
+            <div class="card-body mx-4 mt-3 mb-2">
+                <h2 class="card-title text-center mb-3">ユーザ登録</h2>
+                <p id="result"><br></p>
+                <div class="mb-4">
+                    <label>ID</label>
+                    <input id="id" type="text" class="form-control">
+                    <p class="form-text">IDは後から変更できないので注意してください</p>
+                </div>
+                <div class="mb-4">
+                    <label>ユーザ名</label>
+                    <input id="name" type="text" class="form-control">
+                </div>
+                <div class="mb-4">
+                    <label>パスワード</label>
+                    <input id="password" type="password" class="form-control">
+                </div>
+                <div id="register" class="text-center">
+                    <button type="button" class="btn btn-success" onclick="register()">登録</button>
                 </div>
             </div>
-            <div class="mt-4 text-center">
-                <a href="index.html" class="btn btn-secondary">もどる</a>
-            </div>
+        </div>
+        <div class="mt-4 text-center">
+            <a href="index.html" class="btn btn-secondary">もどる</a>
         </div>
     </div>
+    <footer>
+        <div class="position-absolute top-100 start-50 translate-middle w-100">
+            <hr>
+            <div class="text-center p-4">
+                <p>&copy; 2021 AEON SOFT Ltd.<br>All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 </body>
 
 <script>
