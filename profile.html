@@ -4,26 +4,60 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
     <script type="text/javascript" src="lib/jquery.min.js"></script>
     <script type="text/javascript" src="lib/osql.js"></script>
-
 </head>
 
-<body>
-    <h1 id="profile-header">**</h1>
-    <div id="follow"><button id=follow-btn onclick="follow()">フォローする</button></div>
-    <div id="unfollow"><button id=unfollow-btn onclick="unfollow()">フォロー解除</button></div>
-    <p id="bio"></p>
-    <p id="counts">フォロー: 0人 フォロワー: 0人</p>
-    <button id="list-btn" onclick="selectFollows()">一覧を表示</button><br><br>
-    <div id="follow-list"></div>
-    <a href="javascript:history.back()">もどる</a>
-    <a href="usertop.html">トップページへ</a>
+<body class="bg-light">
+    <header class="m-3">
+        <h1 id="profile-header">**</h1>
+        <div class="m-1">
+            <a href="usertop.html" class="btn btn-primary">トップページへ</a>
+            <a href="javascript:history.back()" class="btn btn-secondary ms-1">もどる</a>
+        </div>
+    </header>
     <hr>
-    <h2>投稿一覧</h2>
-    <div id="videos">まだ投稿がありません</div>
+    <div class="container m-2">
+        <div id="follow">
+            <button id="follow-btn" type="button" class="btn btn-outline-info mb-4 text-dark" onclick="follow()">フォローする</button>
+        </div>
+        <div id="unfollow">
+            <button id="unfollow-btn" type="button" class="btn btn-info mb-4 text-light" onclick="unfollow()">フォロー解除</button>
+        </div>
+        <div class="card bg-light border-dark my-4">
+            <h4 class="card-header border-dark text-dark">プロフィール</h4>
+            <div class="card-body" id="bio"></div>
+        </div>
+        <div class="mb-5">
+            <p id="counts"></p>
+            <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#list">一覧を表示</button>
+        </div>
 
+        <div class="modal fade" id="list" tabindex="-1" aria-labelledby="list-label" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content bg-light">
+                    <div class="modal-header border-dark">
+                        <h3 id="list-label" class="modal-title">一覧</h3>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="follow-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3>投稿一覧</h3>
+        <div id="videos" class="row row-cols-auto mt-3">まだ投稿がありません</div>
+    </div>
+    <hr>
+    <footer>
+        <div class="text-center p-4">
+            <p>&copy; 2021 AEON SOFT Ltd.<br>All rights reserved.</p>
+        </div>
+    </footer>
 </body>
 <script>
     $().ready(function() {
@@ -34,6 +68,7 @@
         checkFollow();
         selectProfile();
         selectFollowCounts();
+        selectFollows();
         selectVideos();
     }
 
@@ -42,16 +77,19 @@
     async function checkFollow() {
         var fromid = sessionStorage.getItem("userid");
         var toid = osql.getParam("userid");
-        if (fromid != toid) {
+        if (fromid !== toid) {
             var sql = `select * from Follows where fromid = "${fromid}" and toid = "${toid}"`;
             var objects = await osql.connect(sql);
             if (objects.length > 0) {
                 document.getElementById("follow").style.display = "none";
+                document.getElementById("unfollow").style.display = "block";
             } else {
+                document.getElementById("follow").style.display = "block";
                 document.getElementById("unfollow").style.display = "none";
             }
         } else {
             document.getElementById("follow").innerHTML = "";
+            document.getElementById("unfollow").innerHTML = "";
         }
     }
 
@@ -79,10 +117,6 @@
         selectFollows();
     }
 
-    async function execUnfollow() {
-
-    }
-
     async function selectProfile() {
         var userid = osql.getParam("userid");
         var sql = `select name, bio from Users where id = "${userid}"`;
@@ -100,7 +134,7 @@
             "following": objects[0].count,
             "followers": objects[1].count
         }
-        document.getElementById("counts").innerHTML = `フォロー: ${counts.following}人 フォロワー: ${counts.followers}人`;
+        document.getElementById("counts").innerHTML = `<strong>フォロー: ${counts.following}人<span class="ms-3">フォロワー: ${counts.followers}</span>人</strong>`;
     }
 
     async function selectFollows() {
@@ -111,18 +145,19 @@
         var followers = await osql.connect(follower_sql);
         var table = "";
         if (followings.length > 0) {
-            table += "<table border='1' style='margin-bottom: 18px'>";
-            table += "<th>フォロー</th><th>フォロワー</th>"
+            table += `<table class="table table-bordered table-striped border-dark">`;
+            table += `<thead class="border-dark"><th>フォロー</th><th>フォロワー</th></thead>`;
+            table += `<tbody>`;
             if (followings.length > followers.length) {
                 for (var i = 0; i < followings.length; i++) {
                     var following = followings[i];
                     var follower = followers[i];
-                    table += "<tr>";
+                    table += `<tr class="w-50">`;
                     table += `<td><a href="profile.html?userid=${following.toid}">${following.to_name}</a></td>`;
                     if (follower) {
                         table += `<td><a href="profile.html?userid=${follower.fromid}">${follower.from_name}</a></td>`;
                     } else {
-                        table += `<td></td>`;
+                        table += "<td></td>";
                     }
                     table += "</tr>";
                 }
@@ -140,32 +175,9 @@
                     table += "</tr>";
                 }
             }
-            table += "</table>";
+            table += "</tbody></table>";
         }
         document.getElementById("follow-list").innerHTML = table;
-        document.getElementById("list-btn").innerHTML = "一覧を非表示";
-        $("#list-btn").removeAttr("onclick");
-        $("#list-btn").on("click", function() {
-            hideFollows();
-        });
-    }
-
-    async function hideFollows() {
-        document.getElementById("follow-list").style.display = "none";
-        document.getElementById("list-btn").innerHTML = "一覧を表示"
-        $("#list-btn").removeAttr("onclick");
-        $("#list-btn").on("click", function() {
-            showFollows();
-        });
-    }
-
-    async function showFollows() {
-        document.getElementById("follow-list").style.display = "block";
-        document.getElementById("list-btn").innerHTML = "一覧を非表示"
-        $("#list-btn").removeAttr("onclick");
-        $("#list-btn").on("click", function() {
-            hideFollows();
-        });
     }
 
     async function selectVideos() {
@@ -176,15 +188,24 @@
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];
             if (i < 1) {
-                document.getElementById("videos").innerHTML = `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user${i}"></p><p id="review${i}"></p><p><a href="detail.html?videoid=${object.videoid}">詳細</a></p>`;
+                document.getElementById("videos").innerHTML = `<div id="post${i}" class="card border-dark bg-light col p-4 mb-3 mx-2"><iframe width='256' height='144' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user${i}"></div><p id="review${i}"></p><div class="my-3"><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></div><div id="delete${i}" class="float-end"></div></div>`;
             } else {
-                document.getElementById("videos").innerHTML += `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user${i}"></p><p id="review${i}"></p><p><a href="detail.html?videoid=${object.videoid}">詳細</a></p>`;
+                document.getElementById("videos").innerHTML += `<div  id="post${i}" class="card border-dark bg-light col p-4 mb-3 mx-2"><iframe width='256' height='144' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user${i}"></div><p id="review${i}"></p><div class="my-3"><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></div><div id="delete${i}" class="float-end"></div></div>`;
             }
+            document.getElementById("user" + i).innerHTML = `<a href="profile.html?userid=${object.userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${object.name}</a><p class="mt-2 text-break" style="width: 256px;">${object.note}</p>`;
+            document.getElementById("review" + i).innerHTML = `👍 ${object.good} <span class="m-3">👎 ${object.bad}</span>`;
             if (object.userid === login_id) {
-                document.getElementById("videos").innerHTML += `<p><button onclick="doDelete(${object.videoid})">削除</button></p>`
+                document.getElementById("delete" + i).innerHTML = `<button type="button" class="btn btn-sm btn-danger" onclick="doDelete(${object.videoid}, ${i})">削除</button>`;
             }
-            document.getElementById("user" + i).innerHTML = `<a href="profile.html?userid=${object.userid}">${object.name}</a> ${object.note}`
-            document.getElementById("review" + i).innerHTML = `👍 ${object.good}    👎 ${object.bad}`
+        }
+    }
+
+    async function doDelete(videoid, num) {
+        var sql = `delete from Videos where id = ${videoid};`;
+        var isConfirmed = window.confirm("投稿を削除してよろしいですか？");
+        if (isConfirmed) {
+            await osql.connect(sql);
+            document.getElementById("post" + num).style.display = "none";
         }
     }
 </script>
