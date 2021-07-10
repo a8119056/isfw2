@@ -95,7 +95,7 @@
             } else {
                 document.getElementById("videos").innerHTML += `<div id="post${i}" class="card border-dark bg-light col p-4 mb-3 mx-2"><iframe width='256' height='144' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user${i}"></div><p id="review${i}"></p><div class="my-3"><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></div><div id="delete${i}" class="float-end"></div></div>`;
             }
-            document.getElementById("user" + i).innerHTML = `<a href="profile.html?userid=${object.userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2 text-break">${object.name}</a><p class="mt-2 text-break" style="width: 256px;">${object.note}</p>`;
+            document.getElementById("user" + i).innerHTML = `<a href="profile.html?userid=${object.userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${object.name}</a><p class="mt-2 text-break" style="width: 256px;">${object.note}</p>`;
             document.getElementById("review" + i).innerHTML = `👍 ${object.good} <span class="m-3">👎 ${object.bad}</span>`;
             if (object.userid === userid) {
                 document.getElementById("delete" + i).innerHTML = `<button type="button" class="btn btn-sm btn-danger" onclick="doDelete(${object.videoid}, ${i})">削除</button>`;
