@@ -116,7 +116,15 @@
             asterisks += "*";
         }
         document.getElementById("asterisks").innerHTML = asterisks;
-        document.getElementById("bio").innerHTML = object.bio;
+        if (object.bio === null) {
+            document.getElementById("bio").innerHTML = `<span class="text-muted">(未設定)</span>`;
+        } else {
+            if (object.bio.length < 1) {
+                document.getElementById("bio").innerHTML = `<span class="text-muted">(未設定)</span>`;
+            } else {
+                document.getElementById("bio").innerHTML = object.bio;
+            }
+        }
         document.getElementById("new-name").value = object.name;
         document.getElementById("new-bio").value = object.bio;
     }

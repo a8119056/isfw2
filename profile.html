@@ -60,8 +60,9 @@
         </div>
     </footer>
 </body>
+
 <script>
-    $().ready(function() {
+    $(function() {
         init();
     });
 
@@ -124,7 +125,15 @@
         var objects = await osql.connect(sql);
         var object = objects[0];
         document.getElementById("profile-header").innerHTML = object.name;
-        document.getElementById("bio").innerHTML = object.bio;
+        if (object.bio === null) {
+            document.getElementById("bio").innerHTML = `<span class="text-muted">(未設定)</span>`;
+        } else {
+            if (object.bio.length < 1) {
+                document.getElementById("bio").innerHTML = `<span class="text-muted">(未設定)</span>`;
+            } else {
+                document.getElementById("bio").innerHTML = object.bio;
+            }
+        }
     }
 
     async function selectFollowCounts() {
