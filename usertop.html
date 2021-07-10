@@ -25,9 +25,9 @@
         </div>
     </header>
     <hr>
-    <div class="container m-1">
+    <div class="container m-2">
 
-        <button type="button" class="btn btn-lg btn-primary" data-bs-toggle="modal" data-bs-target="#post">投稿する</button>
+        <button type="button" class="btn btn-lg btn-success sticky-top" data-bs-toggle="modal" data-bs-target="#post">投稿する</button>
 
         <div class="modal fade" id="post" tabindex="-1" aria-labelledby="post-abel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -47,7 +47,9 @@
                                 <label class="form-label">コメント</label>
                                 <input id="note" type="text" class="form-control" placeholder="省略可">
                             </div>
-                            <button type="button" class="btn btn-primary" onclick="post()">送信</button>
+                            <div class="text-center">
+                                <button type="button" class="btn btn-success" onclick="post()">送信</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -88,9 +90,9 @@
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];
             if (i < 1) {
-                document.getElementById("videos").innerHTML = `<div id="post${i}" class="card border-dark bg-light col p-4 m-2"><iframe width='256' height='144' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user${i}"></div><p id="review${i}"></p><div class="my-3"><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></div><div id="delete${i}" class="float-end"></div></div>`;
+                document.getElementById("videos").innerHTML = `<div id="post${i}" class="card border-dark bg-light col p-4 mb-3 mx-2"><iframe width='256' height='144' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user${i}"></div><p id="review${i}"></p><div class="my-3"><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></div><div id="delete${i}" class="float-end"></div></div>`;
             } else {
-                document.getElementById("videos").innerHTML += `<div id="post${i}" class="card border-dark bg-light col p-4 m-2"><iframe width='256' height='144' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user${i}"></div><p id="review${i}"></p><div class="my-3"><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></div><div id="delete${i}" class="float-end"></div></div>`;
+                document.getElementById("videos").innerHTML += `<div id="post${i}" class="card border-dark bg-light col p-4 mb-3 mx-2"><iframe width='256' height='144' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user${i}"></div><p id="review${i}"></p><div class="my-3"><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></div><div id="delete${i}" class="float-end"></div></div>`;
             }
             document.getElementById("user" + i).innerHTML = `<a href="profile.html?userid=${object.userid}" class="btn btn-sm btn-outline-dark fs-5 mt-2">${object.name}</a><p class="mt-2 fs-6">${object.note}</p>`
             document.getElementById("review" + i).innerHTML = `👍 ${object.good} <span class="m-3">👎 ${object.bad}</span>`
