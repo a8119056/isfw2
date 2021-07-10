@@ -4,25 +4,42 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
     <script type="text/javascript" src="lib/jquery.min.js"></script>
     <script type="text/javascript" src="lib/osql.js"></script>
-
 </head>
 
 <body>
-    <h1>ユーザ登録</h1>
-    <p>*IDは後から変更できないので注意してください</p>
-    ID<br>
-    <input id="id" type="text">
-    <br> ユーザ名<br>
-    <input id="name" type="text">
-    <br> パスワード<br>
-    <input id="password" type="password">
-    <button onclick="register()">登録</button>
-    <br>
-    <p id="result"></p>
-    <a href="index.html">もどる</a>
+    <div class="container">
+        <div class="position-absolute top-50 start-50 translate-middle w-75">
+            <div class="card border-dark border-2 rounded-3">
+                <div class="card-body mx-4 mt-3 mb-2">
+                    <h2 class="card-title text-center mb-3">ユーザ登録</h2>
+                    <p id="result"><br></p>
+                    <div class="mb-4">
+                        <label>ID</label>
+                        <input id="id" type="text" class="form-control">
+                        <p class="form-text">IDは後から変更できないので注意してください</p>
+                    </div>
+                    <div class="mb-4">
+                        <label>ユーザ名</label>
+                        <input id="name" type="text" class="form-control">
+                    </div>
+                    <div class="mb-4">
+                        <label>パスワード</label>
+                        <input id="password" type="password" class="form-control">
+                    </div>
+                    <div id="register" class="text-center">
+                        <button type="button" class="btn btn-success" onclick="register()">登録</button>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-center">
+                <a href="index.html" class="btn btn-secondary">もどる</a>
+            </div>
+        </div>
+    </div>
 </body>
 
 <script>
@@ -36,15 +53,17 @@
         var check_sql = `select id from Users where id = "${userid}";`;
         var check_objects = await osql.connect(check_sql);
         if (userid.length < 1 || username.length < 1 || password.length < 1) {
-            document.getElementById("result").innerHTML = "登録失敗: すべての項目を入力してください";
+            document.getElementById("result").innerHTML = `<span class="text-danger">*</span>登録失敗: すべての項目を入力してください`;
         } else if (check_objects.length > 0) {
-            document.getElementById("result").innerHTML = "登録失敗: そのIDはすでに使われています";
+            document.getElementById("result").innerHTML = `<span class="text-danger">*</span>登録失敗: そのIDはすでに使用されています`;
         } else {
             var sql = `insert into Users (id, name, password) values("${userid}", "${username}", "${password}");`;
             var objects = await osql.connect(sql);
             document.getElementById("result").innerHTML = "ユーザ登録が完了しました";
+            sessionStorage.setItem("userid", userid);
+            sessionStorage.setItem("username", username);
+            document.getElementById("register").innerHTML = `<a href="usertop.html" class="btn btn-primary">ログイン</button>`;
         }
-
     }
 </script>
 
