@@ -34,7 +34,7 @@
         </div>
         <div class="mb-5">
             <p id="counts"></p>
-            <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#list">一覧を表示</button>
+            <button id="list-btn" type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#list">一覧を表示</button>
         </div>
 
         <div class="modal fade" id="list" tabindex="-1" aria-labelledby="list-label" aria-hidden="true">
@@ -140,13 +140,16 @@
 
     async function selectFollowCounts() {
         var userid = osql.getParam("userid");
-        var sql = `select count(*) as count from (Users as FromUsers inner join Follows on FromUsers.id = Follows.fromid) inner join Users as ToUsers on Follows.toid = ToUsers.id where fromid = "${userid}" union select count(*) from (Users as FromUsers inner join Follows on FromUsers.id = Follows.fromid) inner join Users as ToUsers on Follows.toid = ToUsers.id where toid = "${userid}";`;
-        var objects = await osql.connect(sql);
-        var counts = {
-            "following": objects[0].count,
-            "followers": objects[1].count
+        var from_sql = `select count(*) as from_count from (Users as FromUsers inner join Follows on FromUsers.id = Follows.fromid) inner join Users as ToUsers on Follows.toid = ToUsers.id where fromid = "${userid}";`;
+        var to_sql = `select count(*) as to_count from (Users as FromUsers inner join Follows on FromUsers.id = Follows.fromid) inner join Users as ToUsers on Follows.toid = ToUsers.id where toid = "${userid}";`;
+        var from_objects = await osql.connect(from_sql);
+        var to_objects = await osql.connect(to_sql);
+        var from_count = from_objects[0].from_count;
+        var to_count = to_objects[0].to_count;
+        document.getElementById("counts").innerHTML = `<strong>フォロー: ${from_count}人<span class="ms-3">フォロワー: ${to_count}</span>人</strong>`;
+        if (from_count < 1 && to_count < 1) {
+            document.getElementById("list-btn").style.display = "none";
         }
-        document.getElementById("counts").innerHTML = `<strong>フォロー: ${counts.following}人<span class="ms-3">フォロワー: ${counts.followers}</span>人</strong>`;
     }
 
     async function selectFollows() {
@@ -157,7 +160,7 @@
         var followers = await osql.connect(follower_sql);
         var table = "";
         if (followings.length > 0) {
-            table += `<table class="table table-bordered table-striped border-dark">`;
+            table += `<table class="table table-bordered table-striped table-hover border-dark">`;
             table += `<thead class="border-dark"><th>フォロー</th><th>フォロワー</th></thead>`;
             table += `<tbody>`;
             if (followings.length > followers.length) {
@@ -165,9 +168,9 @@
                     var following = followings[i];
                     var follower = followers[i];
                     table += `<tr class="w-50">`;
-                    table += `<td><a href="profile.html?userid=${following.toid}">${following.to_name}</a></td>`;
+                    table += `<td class="position-relative"><a href="profile.html?userid=${following.toid}" class="stretched-link">${following.to_name}</a></td>`;
                     if (follower) {
-                        table += `<td><a href="profile.html?userid=${follower.fromid}">${follower.from_name}</a></td>`;
+                        table += `<td class="position-relative"><a href="profile.html?userid=${follower.fromid}" class="stretched-link">${follower.from_name}</a></td>`;
                     } else {
                         table += "<td></td>";
                     }
@@ -179,11 +182,11 @@
                     var follower = followers[i];
                     table += "<tr>";
                     if (following) {
-                        table += `<td><a href="profile.html?userid=${following.toid}">${following.to_name}</a></td>`;
+                        table += `<td class="position-relative"><a href="profile.html?userid=${following.toid}" class="stretched-link">${following.to_name}</a></td>`;
                     } else {
                         table += `<td></td>`;
                     }
-                    table += `<td><a href="profile.html?userid=${follower.fromid}">${follower.from_name}</a></td>`;
+                    table += `<td class="position-relative"><a href="profile.html?userid=${follower.fromid}"  class="stretched-link">${follower.from_name}</a></td>`;
                     table += "</tr>";
                 }
             }
