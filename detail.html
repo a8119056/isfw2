@@ -20,12 +20,14 @@
     </header>
     <hr>
     <div class="container m-2">
-        <div id="video"></div>
+        <div id="video" class="me-3"></div>
         <div id="post-comment" class="mt-4">
             <h3>コメントする</h3>
-            <input id="input-comment" type="text" class="form-control"><button type="button" class="btn btn-success mt-3" onclick="postComment()">投稿</button>
-            <hr>
+            <input id="input-comment" class="form-control"><button type="button" class="btn btn-success mt-3" onclick="postComment()">投稿</button>
         </div>
+    </div>
+    <hr>
+    <div class="container m-2">
         <div id="comment-buttons"></div>
         <div id="comments"></div>
     </div>
@@ -43,41 +45,58 @@
     });
 
     function init() {
+        countComments();
         doSelect();
     }
 
     osql.requireLogin();
 
-    const reply_nums = [...Array(1024).keys()];
+    var reply_nums;
 
-    async function doSelect() {
-        var userid = sessionStorage.getItem("userid");
-        var videoid = osql.getParam("videoid");
-        var sql = `select Videos.id as videoid, userid, url, note, good, bad, name from Videos inner join Users on Videos.userid = Users.id where Videos.id = ${videoid};`;
+    async function countComments() {
+        var sql = `select count(*) as count from Comments;`;
         var objects = await osql.connect(sql);
         var object = objects[0];
+        reply_nums = [...Array(Number(object.count)).keys()];
+    }
+
+    async function doSelect() {
+        var element = document.getElementById("video");
+        var width = parseInt(window.getComputedStyle(element).width);
+        if (width > 736) {
+            width = 736;
+        }
+        var height = Math.round(width * 9 / 16);
+
+        var userid = sessionStorage.getItem("userid");
+        var videoid = osql.getParam("videoid");
+        var sql = `select Videos.id as videoid, url, note, good, bad, name from Videos inner join Users on Videos.userid = Users.id where Videos.id = ${videoid};`;
+        var objects = await osql.connect(sql);
+        var object = objects[0];
+
         var count_sql = `select Videos.id from (Videos inner join Users on Videos.userid = Users.id) left join Comments on Videos.id = Comments.toid where Comments.toid = ${videoid} and !is_to_comment;`;
         var counts = await osql.connect(count_sql);
         if (counts.length > 0) {
-            document.getElementById("video").innerHTML = `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user"></p><p id="review"></p>`;
-            document.getElementById("comment-buttons").innerHTML = `<button id="comment-close" onclick="closeComments()">コメントを非表示</button><button id="comment-open" onclick="openComments()">コメントを表示</button>`;
+            document.getElementById("video").innerHTML = `<iframe width='${width}' height='${height}' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user" class="mb-3"></div><div id="review"></div>`;
+            document.getElementById("comment-buttons").innerHTML = `<button id="comment-close" type="button" class="btn btn-primary" onclick="closeComments()">コメントを非表示</button><button id="comment-open" type="button" class="btn btn-primary" onclick="openComments()">コメントを表示</button>`;
             selectComments();
         } else {
-            document.getElementById("video").innerHTML = `<iframe width='560' height='315' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><p id="user"></p><p id="review"></p>`;
+            document.getElementById("video").innerHTML = `<iframe width='100%' height='100%' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user" class="mb-3"></div><div id="review"></div>`;
             document.getElementById("comments").innerHTML = `まだコメントはありません`;
         }
-        document.getElementById("user").innerHTML = `<a href="profile.html?userid=${object.userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${object.name}</a><p class="my-3">${object.note}</p>`;
+
+        document.getElementById("user").innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${object.name}</a><p class="my-3">${object.note}</p>`;
         if (userid === object.userid) {
             document.getElementById("user").innerHTML += `<button type="button" class="btn btn-sm btn-primary" onclick="editNote('${object.note}')">編集</button>`;
         }
-        document.getElementById("review").innerHTML = `<button onclick="doVideoGood(${object.videoid})">👍</button> ${object.good}    <button onclick="doVideoBad(${object.videoid})">👎</button> ${object.bad}`;
+        document.getElementById("review").innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood(${videoid})">👍</button><span class="ms-2">${object.good}</span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad(${videoid})">👎</button><span class="ms-2">${object.bad}</span>`;
     }
 
 
     function editNote(note) {
         var userid = sessionStorage.getItem("userid");
         var username = sessionStorage.getItem("username");
-        document.getElementById("user").innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${username}</a><input id="edit-note" class="form-control mt-2" value="${note}"></input><div class="mt-3"><button type="button" class="btn btn-sm btn-primary" onclick="updateNote()">更新</button><button type="button" class="btn btn-sm btn-danger ms-1" onclick="cancelEditNote('${note}')">取消</button></div>`;
+        document.getElementById("user").innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${username}</a><input id="edit-note" class="form-control mt-2" value="${note}"></input><div class="mt-3"><button type="button" class="btn btn-sm btn-primary" onclick="updateNote()">更新</button><button type="button" class="btn btn-sm btn-outline-danger ms-1" onclick="cancelEditNote('${note}')">取消</button></div>`;
     }
 
     function cancelEditNote(note) {
@@ -116,15 +135,15 @@
             var count_sql = `select Childs.id from (Comments as Parents left join Comments as Childs on Parents.id = Childs.toid) inner join Users on Childs.userid = Users.id where Childs.toid = ${object.comment_id} and Childs.is_to_comment;`;
             var counts = await osql.connect(count_sql);
             if (counts.length > 0) {
-                document.getElementById("comments").innerHTML += `<p id="commenter${i}"></p><p id="comment-review${i}"></p><p id="post-reply${new_reply_num}"><button onclick="showReplyForm(${object.comment_id}, ${new_reply_num})">返信する</button> <button id="reply-btn${new_reply_num}" onclick="selectReplies(${object.comment_id}, ${new_reply_num})">返信を表示</button></p><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
+                document.getElementById("comments").innerHTML += `<hr><div id="commenter${i}"></div><div id="comment-review${i}"></div><div id="post-reply${new_reply_num}"><div id="reply-buttons${new_reply_num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.comment_id}, ${new_reply_num}, true)">返信する</button><button id="reply-select${new_reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${object.comment_id}, ${new_reply_num})">返信を表示</button></div><div id="replies${new_reply_num}" class="ms-5"></div>`;
             } else {
-                document.getElementById("comments").innerHTML += `<p id="commenter${i}"></p><p id="comment-review${i}"></p><p id="post-reply${new_reply_num}"><button onclick="showReplyForm(${object.comment_id}, ${new_reply_num})">返信する</button></p><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
+                document.getElementById("comments").innerHTML += `<hr><div id="commenter${i}"></div><div id="comment-review${i}"></div><div id="post-reply${new_reply_num}"><div id="reply-buttons${new_reply_num}" class="my-3"><button type="button" class="btn btn-sm btn-success"onclick="showReplyForm(${object.comment_id}, ${new_reply_num}, false)">返信する</button></div><div id="replies${new_reply_num}" class="ms-5"></div>`;
             }
-            document.getElementById("commenter" + i).innerHTML = `<b>${object.name}</b> ${object.comment}`;
+            document.getElementById("commenter" + i).innerHTML = `<a href="profile.html?userid=${object.commenter_id}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${object.name}</a><p class="mb-2">${object.comment}</p>`;
             if (userid === object.commenter_id) {
-                document.getElementById("commenter" + i).innerHTML += ` <button onclick="editComment('${object.comment}', 'commenter' + ${i}, ${new_reply_num}, ${object.comment_id})">編集</button> <button onclick="deleteComment(${object.comment_id})">削除</button>`;
+                document.getElementById("commenter" + i).innerHTML += `<div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${object.comment}', 'commenter' + ${i}, ${new_reply_num}, ${object.comment_id})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${object.comment_id})">削除</button></div>`;
             }
-            document.getElementById("comment-review" + i).innerHTML = `<button onclick="doCommentGood(${object.comment_id})">👍</button> ${object.good}    <button onclick="doCommentBad(${object.comment_id})">👎</button> ${object.bad}`;
+            document.getElementById("comment-review" + i).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${object.comment_id})">👍</button><span class="ms-2">${object.good}</span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${object.comment_id})">👎</button><span class="ms-2">${object.bad}</span>`;
         }
         document.getElementById("comment-open").style.display = "none";
     }
@@ -142,7 +161,6 @@
         document.getElementById("comments").style.display = "block";
     }
 
-
     async function selectReplies(toid, reply_num) {
         var userid = sessionStorage.getItem("userid");
         var sql = `select name, Childs.userid as replier_id, Childs.id as reply_id, Childs.comment as comment, Childs.good as good, Childs.bad as bad from (Comments as Parents left join Comments as Childs on Parents.id = Childs.toid) inner join Users on Childs.userid = Users.id where Childs.toid = ${toid} and Childs.is_to_comment;`;
@@ -153,44 +171,33 @@
             var count_sql = `select Childs.id from (Comments as Parents inner join Users on Parents.userid = Users.id) left join Comments as Childs on Parents.id = Childs.toid where Childs.toid = ${object.reply_id} and Childs.is_to_comment;`;
             var counts = await osql.connect(count_sql);
             if (counts.length > 0) {
-                document.getElementById("reply" + reply_num).innerHTML += `<p id="replier${new_reply_num}"></p><p id="reply-review${new_reply_num}"></p><p id="post-reply${new_reply_num}"><button onclick="showReplyForm(${object.reply_id}, ${new_reply_num})">返信する</button> <button id="reply-btn${new_reply_num}" onclick="selectReplies(${object.reply_id}, ${new_reply_num})">返信を表示</button></p><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
+                document.getElementById("replies" + reply_num).innerHTML += `<hr><div id="replier${new_reply_num}"></div><div id="reply-review${new_reply_num}"></div><div id="post-reply${new_reply_num}"><div id="reply-buttons${new_reply_num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.reply_id}, ${new_reply_num}, true)">返信する</button><button id="reply-select${new_reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${object.reply_id}, ${new_reply_num})">返信を表示</button></div></div><div id="replies${new_reply_num}" class="ms-5"></div>`;
             } else {
-                document.getElementById("reply" + reply_num).innerHTML += `<p id="replier${new_reply_num}"></p><p id="reply-review${new_reply_num}"></p><p id="post-reply${new_reply_num}"><button onclick="showReplyForm(${object.reply_id}, ${new_reply_num})">返信する</button></p><p id="reply${new_reply_num}" style="margin-left: 40px;"></p>`;
+                document.getElementById("replies" + reply_num).innerHTML += `<hr><div id="replier${new_reply_num}"></div><div id="reply-review${new_reply_num}"></div><div id="post-reply${new_reply_num}"><div id="reply-buttons${new_reply_num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.reply_id}, ${new_reply_num}, false)">返信する</button></div></div><div id="replies${new_reply_num}" class="ms-5"></div>`;
             }
-            document.getElementById("replier" + new_reply_num).innerHTML = `<b>${object.name}</b> ${object.comment}`;
+            document.getElementById("replier" + new_reply_num).innerHTML = `<a href="profile.html?userid=${object.replier_id}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${object.name}</a><p class="mb-2">${object.comment}</p>`;
             if (userid === object.replier_id) {
-                document.getElementById("replier" + new_reply_num).innerHTML += ` <button onclick="editComment('${object.comment}', 'replier' + ${new_reply_num}, ${new_reply_num}, ${object.reply_id})">編集</button> <button onclick="deleteComment(${object.reply_id})">削除</button>`;
+                document.getElementById("replier" + new_reply_num).innerHTML += `<div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${object.comment}', 'replier' + ${new_reply_num}, ${new_reply_num}, ${object.reply_id})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${object.reply_id})">削除</button></div>`;
             }
-            document.getElementById("reply-review" + new_reply_num).innerHTML = `<button onclick="doCommentGood(${object.reply_id})">👍</button> ${object.good}    <button onclick="doCommentBad(${object.reply_id})">👎</button> ${object.bad}`;
+            document.getElementById("reply-review" + new_reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${object.reply_id})">👍</button><span class="ms-2">${object.good}</span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${object.reply_id})">👎</button><span class="ms-2">${object.bad}</span>`;
+            document.getElementById("reply-buttons" + reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${toid}, ${reply_num}, true)">返信する</button><button id="reply-open${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" style="display: none;" onclick="openReplies(${toid}, ${reply_num})">返信を表示</button><button id="reply-close${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="closeReplies(${toid}, ${reply_num})">返信を非表示</button>`;
+
         }
-        document.getElementById("reply-btn" + reply_num).innerHTML = "返信を非表示";
-        $("#reply-btn" + reply_num).removeAttr("onclick");
-        $("#reply-btn" + reply_num).on("click", function() {
-            closeReplies(reply_num);
-        });
     }
 
 
-    function closeReplies(reply_num) {
-        document.getElementById("reply" + reply_num).style.display = "none";
-        document.getElementById("reply-btn" + reply_num).innerHTML = "返信を表示";
-        $("#reply-btn" + reply_num).removeAttr("onclick");
-        $("#reply-btn" + reply_num).on("click", function() {
-            openReplies(reply_num);
-        });
+    function closeReplies(toid, reply_num) {
+        document.getElementById("reply-buttons" + reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${toid}, ${reply_num}, true)">返信する</button><button id="reply-open${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="openReplies(${toid}, ${reply_num})">返信を表示</button>`;
+        document.getElementById("replies" + reply_num).style.display = "none";
     }
 
-    function openReplies(reply_num) {
-        document.getElementById("reply" + reply_num).style.display = "block";
-        document.getElementById("reply-btn" + reply_num).innerHTML = "返信を非表示";
-        $("#reply-btn" + reply_num).removeAttr("onclick");
-        $("#reply-btn" + reply_num).on("click", function() {
-            closeReplies(reply_num);
-        });
+    function openReplies(toid, reply_num) {
+        document.getElementById("reply-buttons" + reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${toid}, ${reply_num}, true)">返信する</button><button id="reply-close${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="closeReplies(${toid}, ${reply_num})">返信を非表示</button>`;
+        document.getElementById("replies" + reply_num).style.display = "block";
     }
 
-    function showReplyForm(toid, num) {
-        document.getElementById("post-reply" + num).innerHTML = `<input id="input-reply${num}" type="text"></input> <button onclick="postReply(${toid}, ${num})">投稿</button> <button onclick="cancelReply(${toid}, ${num})">取消</button>`;
+    function showReplyForm(toid, num, hasReplies) {
+        document.getElementById("post-reply" + num).innerHTML = `<div class="my-3"><input id="input-reply${num}" class="form-control"></input><div class="mt-3"><button type="button" class="btn btn-sm btn-primary" onclick="postReply(${toid}, ${num})">投稿</button> <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="cancelReply(${toid}, ${num}, ${hasReplies})">取消</button></div></div>`;
     }
 
     async function postReply(toid, num) {
@@ -198,29 +205,37 @@
         var reply = document.getElementById("input-reply" + num).value;
         var sql = `insert into Comments (userid, comment, toid, is_to_comment) values ("${userid}", "${reply}", ${toid}, true);`;
         await osql.connect(sql);
-        location.reload()
+        location.reload();
     }
 
-    function cancelReply(comment_id, num) {
-        document.getElementById("post-reply" + num).innerHTML = `<p id="post-reply${num}"><button onclick="showReplyForm(${comment_id}, ${num})">返信する</button> <button id="reply-btn${new_reply_num}" onclick="selectReplies(${comment_id}, ${num})">返信を表示</button></p><p id="reply${num}" style="margin-left: 40px;"></p>`;
+    function cancelReply(comment_id, num, hasReplies) {
+        if (hasReplies) {
+            document.getElementById("post-reply" + num).innerHTML = `<div id="reply-buttons${num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${comment_id}, ${num}, true)">返信する</button><button id="reply-select${num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${comment_id}, ${num})">返信を表示</button></div><div id="replies${num}" class="ms-5"></div>`;
+        } else {
+            document.getElementById("post-reply" + num).innerHTML = `<div id="reply-buttons${num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${comment_id}, ${num}, false)">返信する</button></div><div id="replies${num}" class="ms-5"></div>`;
+
+        }
     }
 
     function editComment(comment, input_id, num, comment_id) {
+        var userid = sessionStorage.getItem("userid");
         var username = sessionStorage.getItem("username");
-        document.getElementById(input_id).innerHTML = `<b>${username}</b> <input id="edit-comment${num}" value="${comment}"></input> <button onclick="updateComment('${comment}', '${input_id}', ${num}, ${comment_id})">更新</button> <button onclick="cancelEditComment('${comment}', '${input_id}', ${num}, ${comment_id})">取消</button>`;
+        document.getElementById(input_id).innerHTML = `<div class="mb-3"><a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${username}</a><input id="edit-comment${num}" class="form-control" value="${comment}"></input><div class="mt-3"><button type="button" class="btn btn-sm btn-primary" onclick="updateComment('${comment}', '${input_id}', ${num}, ${comment_id})">更新</button><button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="cancelEditComment('${comment}', '${input_id}', ${num}, ${comment_id})">取消</button></div></div>`;
     }
 
     function cancelEditComment(comment, input_id, num, comment_id) {
+        var userid = sessionStorage.getItem("userid");
         var username = sessionStorage.getItem("username");
-        document.getElementById(input_id).innerHTML = `<b>${username}</b> ${comment} <button onclick="editComment('${comment}', '${input_id}', ${num}, ${comment_id})">編集</button>`;
+        document.getElementById(input_id).innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${username}</a><p class="mb-2">${comment}</p><div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${comment}', '${input_id}', ${num}, ${comment_id})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${object.comment_id})">削除</button><div>`;
     }
 
     async function updateComment(comment, input_id, num, comment_id) {
+        var userid = sessionStorage.getItem("userid");
         var username = sessionStorage.getItem("username");
         var new_comment = document.getElementById("edit-comment" + num).value;
         var sql = `update Comments set comment = "${new_comment}" where id = ${comment_id};`;
         await osql.connect(sql);
-        document.getElementById(input_id).innerHTML = `<b>${username}</b> ${new_comment} <button onclick="editComment('${new_comment}', '${input_id}', ${num}, ${comment_id})">編集</button>`;
+        document.getElementById(input_id).innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${username}</a><p class="mb-2">${new_comment}</p><div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${new_comment}', '${input_id}', ${num}, ${comment_id})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${object.comment_id})">削除</button><div>`;
     }
 
     async function deleteComment(comment_id) {
@@ -231,7 +246,6 @@
             location.reload()
         }
     }
-
 
     async function doVideoGood(videoid) {
         var sql = `update Videos set good = good + 1 where id = ${videoid};`;
