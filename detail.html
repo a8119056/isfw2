@@ -85,7 +85,7 @@
 
         var userid = sessionStorage.getItem("userid");
         var videoid = osql.getParam("videoid");
-        var sql = `select Videos.id as videoid, url, note, good, bad, name from Videos inner join Users on Videos.userid = Users.id where Videos.id = ${videoid};`;
+        var sql = `select Videos.id as videoid, url, note, good, bad, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id where Videos.id = ${videoid};`;
         var objects = await osql.connect(sql);
         var object = objects[0];
 
@@ -99,8 +99,11 @@
             document.getElementById("video").innerHTML = `<iframe width='${width}' height='${height}' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user" class="mb-3"></div><div id="review"></div>`;
             document.getElementById("comments").innerHTML = "まだコメントはありません";
         }
-
-        document.getElementById("user").innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${object.name}</a><p class="my-3">${object.note}</p>`;
+        if (object.note.length > 0) {
+            document.getElementById("user").innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${object.name}</a><p class="my-3">${object.note}</p>`;
+        } else {
+            document.getElementById("user").innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${object.name}</a><p class="text-muted my-3">(未設定)</p>`;
+        }
         if (userid === object.userid) {
             document.getElementById("user").innerHTML += `<button type="button" class="btn btn-sm btn-primary" onclick="editNote('${object.note}')">編集</button>`;
         }
@@ -117,7 +120,12 @@
     function cancelEditNote(note) {
         var userid = sessionStorage.getItem("userid");
         var username = sessionStorage.getItem("username");
-        document.getElementById("user").innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${username}</a><p class="my-3">${note}</p><button type="button" class="btn btn-sm btn-primary" onclick="editNote('${note}')">編集</button>`;
+        if (note.length > 0) {
+            document.getElementById("user").innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${username}</a><p class="my-3">${note}</p><button type="button" class="btn btn-sm btn-primary" onclick="editNote('${note}')">編集</button>`;
+        } else {
+            document.getElementById("user").innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${username}</a><p class="text-muted my-3">(未設定)</p><button type="button" class="btn btn-sm btn-primary" onclick="editNote('${note}')">編集</button>`;
+
+        }
     }
 
     async function updateNote() {
@@ -127,7 +135,12 @@
         var new_note = document.getElementById("edit-note").value;
         var sql = `update Videos set note = "${new_note}" where id = ${videoid};`;
         await osql.connect(sql);
-        document.getElementById("user").innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${username}</a><p class="my-3">${new_note}</p><button type="button" class="btn btn-sm btn-primary" onclick="editNote('${new_note}')">編集</button>`;
+        if (new_note.length > 0) {
+            document.getElementById("user").innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${username}</a><p class="my-3">${new_note}</p><button type="button" class="btn btn-sm btn-primary" onclick="editNote('${new_note}')">編集</button>`;
+        } else {
+            document.getElementById("user").innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${username}</a><p class="text-muted my-3">(未設定)</p><button type="button" class="btn btn-sm btn-primary" onclick="editNote('${new_note}')">編集</button>`;
+
+        }
     }
 
     async function postComment() {
@@ -271,7 +284,8 @@
     function cancelEditComment(comment, input_id, num, comment_id) {
         var userid = sessionStorage.getItem("userid");
         var username = sessionStorage.getItem("username");
-        document.getElementById(input_id).innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${username}</a><p class="mb-2">${comment}</p><div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${comment}', '${input_id}', ${num}, ${comment_id})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${object.comment_id}, true)">削除</button><div>`;
+        document.getElementById(input_id).innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${username}</a><p class="mb-2">${comment}</p><div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${comment}', '${input_id}', ${num}, ${comment_id})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${comment_id}, true)">削除</button><div>`;
+        document.getElementById("reply-result" + num).innerHTML = "<br>";
     }
 
     async function updateComment(comment, input_id, num, comment_id) {
@@ -279,8 +293,13 @@
         var username = sessionStorage.getItem("username");
         var new_comment = document.getElementById("edit-comment" + num).value;
         var sql = `update Comments set comment = "${new_comment}" where id = ${comment_id};`;
-        await osql.connect(sql);
-        document.getElementById(input_id).innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${username}</a><p class="mb-2">${new_comment}</p><div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${new_comment}', '${input_id}', ${num}, ${comment_id})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${object.comment_id}, true)">削除</button><div>`;
+        if (new_comment.length > 0) {
+            await osql.connect(sql);
+            document.getElementById(input_id).innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${username}</a><p class="mb-2">${new_comment}</p><div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${new_comment}', '${input_id}', ${num}, ${comment_id})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${comment_id}, true)">削除</button><div>`;
+            document.getElementById("reply-result" + num).innerHTML = "更新しました";
+        } else {
+            document.getElementById("reply-result" + num).innerHTML = "コメントは1文字以上必要です";
+        }
     }
 
     async function deleteComment(comment_id, is_to_comment) {
