@@ -59,12 +59,20 @@
     }
 
     var reply_nums;
+    var spare_nums;
 
     async function countComments() {
-        var sql = `select count(*) as count from Comments;`;
+        var videoid = osql.getParam("videoid");
+        var sql = `select count(*) as count from Comments where toid = ${videoid};`;
         var objects = await osql.connect(sql);
         var object = objects[0];
         reply_nums = [...Array(Number(object.count)).keys()];
+        if (reply_nums.length < 1) {
+            reply_nums = [0];
+        }
+        spare_nums = reply_nums.concat();
+        console.log(reply_nums);
+        console.log(spare_nums);
     }
 
     async function doSelect() {
@@ -138,6 +146,10 @@
             document.getElementById("input-comment").value = "";
             selectComments();
             document.getElementById("comment-result").innerHTML = "投稿しました";
+            console.log(reply_nums);
+            reply_nums = spare_nums.concat(spare_nums[spare_nums.length - 1] + 1);
+            spare_nums = reply_nums.concat();
+            console.log(reply_nums);
         } else {
             document.getElementById("comment-result").innerHTML = `<span class=text-danger>*</span>投稿失敗: コメントを入力してください`;
         }
@@ -151,14 +163,14 @@
         var objects = await osql.connect(sql);
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];
-            new_reply_num = reply_nums.shift();
+            new_reply_num = reply_nums.pop();
             var count_sql = `select Childs.id from (Comments as Parents left join Comments as Childs on Parents.id = Childs.toid) inner join Users on Childs.userid = Users.id where Childs.toid = ${object.comment_id} and Childs.is_to_comment;`;
             var counts = await osql.connect(count_sql);
             if (counts.length > 0) {
-                document.getElementById("comments").innerHTML += `<hr><div id="commenter${i}"></div><div id="comment-review${i}"></div><div id="post-reply${new_reply_num}"><p id="reply-result${new_reply_num}" class="mt-3"><br></p><div id="reply-buttons${new_reply_num}"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.comment_id}, ${new_reply_num}, true)">返信する</button><button id="reply-select${new_reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${object.comment_id}, ${new_reply_num})">返信を表示</button></div><div id="replies${new_reply_num}" class="ms-5"></div>`;
+                document.getElementById("comments").innerHTML += `<hr><div id="commenter${i}"></div><div id="comment-review${i}"></div><div id="post-reply${new_reply_num}"><p id="reply-result${new_reply_num}" class="mt-3"><br></p><div id="reply-buttons${new_reply_num}"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.comment_id}, ${new_reply_num}, true)">返信する</button><button id="reply-select${new_reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${object.comment_id}, ${new_reply_num})">返信を表示</button></div><div id="replies${new_reply_num}" class="ms-3"></div>`;
                 document.getElementById("comment-open").style.display = "none";
             } else {
-                document.getElementById("comments").innerHTML += `<hr><div id="commenter${i}"></div><div id="comment-review${i}"></div><div id="post-reply${new_reply_num}"><p id="reply-result${new_reply_num}" class="mt-3"><br></p><div id="reply-buttons${new_reply_num}"><button type="button" class="btn btn-sm btn-success"onclick="showReplyForm(${object.comment_id}, ${new_reply_num}, false)">返信する</button></div><div id="replies${new_reply_num}" class="ms-5"></div>`;
+                document.getElementById("comments").innerHTML += `<hr><div id="commenter${i}"></div><div id="comment-review${i}"></div><div id="post-reply${new_reply_num}"><p id="reply-result${new_reply_num}" class="mt-3"><br></p><div id="reply-buttons${new_reply_num}"><button type="button" class="btn btn-sm btn-success"onclick="showReplyForm(${object.comment_id}, ${new_reply_num}, false)">返信する</button></div><div id="replies${new_reply_num}" class="ms-3"></div>`;
             }
             document.getElementById("commenter" + i).innerHTML = `<a href="profile.html?userid=${object.commenter_id}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${object.name}</a><p class="mb-2">${object.comment}</p>`;
             if (userid === object.commenter_id) {
@@ -187,13 +199,13 @@
         var objects = await osql.connect(sql);
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];
-            new_reply_num = reply_nums.shift();
+            new_reply_num = reply_nums.pop();
             var count_sql = `select Childs.id from (Comments as Parents inner join Users on Parents.userid = Users.id) left join Comments as Childs on Parents.id = Childs.toid where Childs.toid = ${object.reply_id} and Childs.is_to_comment;`;
             var counts = await osql.connect(count_sql);
             if (counts.length > 0) {
-                document.getElementById("replies" + reply_num).innerHTML += `<hr><div id="replier${new_reply_num}"></div><div id="reply-review${new_reply_num}"></div><div id="post-reply${new_reply_num}"><div id="reply-buttons${new_reply_num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.reply_id}, ${new_reply_num}, true)">返信する</button><button id="reply-select${new_reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${object.reply_id}, ${new_reply_num})">返信を表示</button></div></div><div id="replies${new_reply_num}" class="ms-5"></div>`;
+                document.getElementById("replies" + reply_num).innerHTML += `<hr><div id="replier${new_reply_num}"></div><div id="reply-review${new_reply_num}"></div><div id="post-reply${new_reply_num}"><div id="reply-buttons${new_reply_num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.reply_id}, ${new_reply_num}, true)">返信する</button><button id="reply-select${new_reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${object.reply_id}, ${new_reply_num})">返信を表示</button></div></div><div id="replies${new_reply_num}" class="ms-3"></div>`;
             } else {
-                document.getElementById("replies" + reply_num).innerHTML += `<hr><div id="replier${new_reply_num}"></div><div id="reply-review${new_reply_num}"></div><div id="post-reply${new_reply_num}"><div id="reply-buttons${new_reply_num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.reply_id}, ${new_reply_num}, false)">返信する</button></div></div><div id="replies${new_reply_num}" class="ms-5"></div>`;
+                document.getElementById("replies" + reply_num).innerHTML += `<hr><div id="replier${new_reply_num}"></div><div id="reply-review${new_reply_num}"></div><div id="post-reply${new_reply_num}"><div id="reply-buttons${new_reply_num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.reply_id}, ${new_reply_num}, false)">返信する</button></div></div><div id="replies${new_reply_num}" class="ms-3"></div>`;
             }
             document.getElementById("replier" + new_reply_num).innerHTML = `<a href="profile.html?userid=${object.replier_id}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${object.name}</a><p class="mb-2">${object.comment}</p>`;
             if (userid === object.replier_id) {
@@ -201,7 +213,10 @@
             }
             document.getElementById("reply-review" + new_reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${object.reply_id})">👍</button><span class="ms-2">${object.good}</span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${object.reply_id})">👎</button><span class="ms-2">${object.bad}</span>`;
             document.getElementById("reply-buttons" + reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${toid}, ${reply_num}, true)">返信する</button><button id="reply-open${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" style="display: none;" onclick="openReplies(${toid}, ${reply_num})">返信を表示</button><button id="reply-close${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="closeReplies(${toid}, ${reply_num})">返信を非表示</button>`;
-
+            console.log(reply_nums);
+            reply_nums = spare_nums.concat(spare_nums[spare_nums.length - 1] + 1);
+            spare_nums = reply_nums.concat();
+            console.log(reply_nums);
         }
     }
 
@@ -230,6 +245,10 @@
             cancelReply(toid, num, true);
             document.getElementById("reply-result" + num).innerHTML = "返信しました";
             document.getElementById("comment-result").innerHTML = "<br>";
+            console.log(reply_nums);
+            reply_nums = spare_nums.concat(spare_nums[spare_nums.length - 1] + 1);
+            spare_nums = reply_nums.concat();
+            console.log(reply_nums);
         } else {
             document.getElementById("reply-result" + num).innerHTML = `<span class=text-danger>*</span>投稿失敗: 返信内容を入力してください`;
         }
@@ -237,9 +256,9 @@
 
     function cancelReply(comment_id, num, hasReplies) {
         if (hasReplies) {
-            document.getElementById("post-reply" + num).innerHTML = `<p id="reply-result${num}" class="mt-3"><br></p><div id="reply-buttons${num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${comment_id}, ${num}, true)">返信する</button><button id="reply-select${num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${comment_id}, ${num})">返信を表示</button></div><div id="replies${num}" class="ms-5"></div>`;
+            document.getElementById("post-reply" + num).innerHTML = `<p id="reply-result${num}" class="mt-3"><br></p><div id="reply-buttons${num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${comment_id}, ${num}, true)">返信する</button><button id="reply-select${num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${comment_id}, ${num})">返信を表示</button></div><div id="replies${num}" class="ms-3"></div>`;
         } else {
-            document.getElementById("post-reply" + num).innerHTML = `<p id="reply-result${num}" class="mt-3"><br></p><div id="reply-buttons${num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${comment_id}, ${num}, false)">返信する</button></div><div id="replies${num}" class="ms-5"></div>`;
+            document.getElementById("post-reply" + num).innerHTML = `<p id="reply-result${num}" class="mt-3"><br></p><div id="reply-buttons${num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${comment_id}, ${num}, false)">返信する</button></div><div id="replies${num}" class="ms-3"></div>`;
         }
     }
 
@@ -274,6 +293,9 @@
             if (!is_to_comment) {
                 var count_sql = `select Videos.id from (Videos inner join Users on Videos.userid = Users.id) left join Comments on Videos.id = Comments.toid where Comments.toid = ${videoid} and !is_to_comment;`;
                 var counts = await osql.connect(count_sql);
+                console.log(reply_nums);
+                reply_nums = spare_nums.concat();
+                console.log(reply_nums);
                 if (counts.length < 1) {
                     document.getElementById("comment-buttons").innerHTML = "";
                     document.getElementById("comments").innerHTML = "まだコメントはありません"
