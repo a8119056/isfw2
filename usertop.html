@@ -26,7 +26,7 @@
     </header>
     <hr class="m-0">
     <div class="sticky-top bg-light">
-        <button type="button" class="btn btn-lg btn-success mx-3 mt-4 mb-2" data-bs-toggle="modal" data-bs-target="#post">投稿する</button>
+        <button id="post-btn" type="button" class="btn btn-lg btn-success mx-3 mt-4 mb-2" data-bs-toggle="modal" data-bs-target="#post" onclick="resetResult()">投稿する</button>
         <hr>
     </div>
     <div class="container m-2">
@@ -38,7 +38,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div id="result"><br></div>
+                        <div id="result" class="my-3"><br></div>
                         <form>
                             <div class="mb-3">
                                 <label class="form-label">YouTubeのURL</label>
@@ -103,6 +103,10 @@
         }
     }
 
+    function resetResult() {
+        document.getElementById("result").innerHTML = "<br>";
+    }
+
     async function post() {
         var url = document.getElementById("url").value;
         var youtube_id = url.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/);
@@ -116,7 +120,7 @@
             doSelect();
             document.getElementById("url").value = "";
             document.getElementById("note").value = "";
-            document.getElementById("result").innerHTML = `<div class="alert alert-success alert-dismissible fade show" role="alert">投稿しました<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+            document.getElementById("result").innerHTML = "投稿しました";
         } else {
             document.getElementById("result").innerHTML = `<span class="text-danger">*</span>正しいURLを入力してください`;
         }
