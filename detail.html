@@ -24,8 +24,10 @@
         <div id="video" class="me-3"></div>
         <div id="post-comment" class="mt-4">
             <h3>コメントする</h3>
-            <input id="input-comment" class="form-control"><button type="button" class="btn btn-success mt-3" onclick="postComment()">投稿</button>
+            <p id="result"><br></p>
         </div>
+        <input id="input-comment" class="form-control"><button type="button" class="btn btn-success mt-3" onclick="postComment()">投稿</button>
+    </div>
     </div>
     <hr>
     <div class="container m-2">
@@ -125,11 +127,17 @@
         var videoid = osql.getParam("videoid");
         var comment = document.getElementById("input-comment").value;
         var sql = `insert into Comments (userid, comment, toid, is_to_comment) values ("${userid}", "${comment}", ${videoid}, false);`;
-        await osql.connect(sql);
-        location.reload();
+        if (comment.length > 0) {
+            await osql.connect(sql);
+            document.getElementById("input-comment").value = "";
+            selectComments();
+        } else {
+            document.getElementById("result").innerHTML = `<span class=text-danger>*</span>投稿失敗: コメントを入力してください`;
+        }
     }
 
     async function selectComments() {
+        document.getElementById("comments").innerHTML = "";
         var userid = sessionStorage.getItem("userid");
         var videoid = osql.getParam("videoid");
         var sql = `select Videos.id as video_id, name, Comments.id as comment_id, Comments.userid as commenter_id, comment, Comments.good as good, Comments.bad as bad from (Videos left join Comments on Videos.id = Comments.toid) inner join Users on Comments.userid = Users.id where Comments.toid = ${videoid} and !is_to_comment;`;
@@ -218,7 +226,6 @@
             document.getElementById("post-reply" + num).innerHTML = `<div id="reply-buttons${num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${comment_id}, ${num}, true)">返信する</button><button id="reply-select${num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${comment_id}, ${num})">返信を表示</button></div><div id="replies${num}" class="ms-5"></div>`;
         } else {
             document.getElementById("post-reply" + num).innerHTML = `<div id="reply-buttons${num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${comment_id}, ${num}, false)">返信する</button></div><div id="replies${num}" class="ms-5"></div>`;
-
         }
     }
 
