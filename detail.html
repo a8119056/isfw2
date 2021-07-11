@@ -42,15 +42,19 @@
 
 <script>
     $(function() {
-        init();
+        checkLogin();
     });
 
-    function init() {
-        countComments();
-        doSelect();
+    async function checkLogin() {
+        osql.requireLogin();
+        var userid = sessionStorage.getItem("userid");
+        if (!userid) {
+            location.href = "index.html";
+        } else {
+            countComments();
+            doSelect();
+        }
     }
-
-    osql.requireLogin();
 
     var reply_nums;
 

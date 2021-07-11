@@ -70,20 +70,28 @@
 
 <script>
     $(function() {
-        init();
+        checkLogin();
     });
 
-    function init() {
+    async function checkLogin() {
+        osql.requireLogin();
+        var userid = sessionStorage.getItem("userid");
+        if (!userid) {
+            location.href = "index.html";
+        } else {
+            setParam();
+            doSelect();
+        }
+    }
+
+    function setParam() {
         var username = sessionStorage.getItem("username");
         document.getElementById("welcome").innerHTML = username + "さん，動画共有SNSへようこそ";
-        doSelect();
     }
 
     function logout() {
         osql.logout();
     }
-
-    osql.requireLogin();
 
     async function doSelect() {
         var userid = sessionStorage.getItem("userid");

@@ -90,15 +90,19 @@
 </body>
 <script>
     $(function() {
-        init();
+        checkLogin();
     });
 
-    function init() {
-        setParam();
-        doSelect();
+    async function checkLogin() {
+        osql.requireLogin();
+        var userid = sessionStorage.getItem("userid");
+        if (!userid) {
+            location.href = "index.html";
+        } else {
+            setParam();
+            doSelect();
+        }
     }
-
-    osql.requireLogin();
 
     function setParam() {
         var userid = sessionStorage.getItem("userid");

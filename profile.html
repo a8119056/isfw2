@@ -64,18 +64,22 @@
 
 <script>
     $(function() {
-        init();
+        checkLogin();
     });
 
-    function init() {
-        checkFollow();
-        selectProfile();
-        selectFollowCounts();
-        selectFollows();
-        selectVideos();
+    async function checkLogin() {
+        osql.requireLogin();
+        var userid = sessionStorage.getItem("userid");
+        if (!userid) {
+            location.href = "index.html";
+        } else {
+            checkFollow();
+            selectProfile();
+            selectFollowCounts();
+            selectFollows();
+            selectVideos();
+        }
     }
-
-    osql.requireLogin();
 
     async function checkFollow() {
         var fromid = sessionStorage.getItem("userid");
