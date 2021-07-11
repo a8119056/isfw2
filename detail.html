@@ -82,7 +82,7 @@
             document.getElementById("comment-buttons").innerHTML = `<button id="comment-close" type="button" class="btn btn-primary" onclick="closeComments()">コメントを非表示</button><button id="comment-open" type="button" class="btn btn-primary" onclick="openComments()">コメントを表示</button>`;
             selectComments();
         } else {
-            document.getElementById("video").innerHTML = `<iframe width='100%' height='100%' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user" class="mb-3"></div><div id="review"></div>`;
+            document.getElementById("video").innerHTML = `<iframe width='${width}' height='${height}' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user" class="mb-3"></div><div id="review"></div>`;
             document.getElementById("comments").innerHTML = `まだコメントはありません`;
         }
 
