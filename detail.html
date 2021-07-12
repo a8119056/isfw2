@@ -31,7 +31,7 @@
     </div>
     <hr>
     <div class="container m-2">
-        <div id="comment-buttons"></div>
+        <div id="comment-button"></div>
         <div id="comments"></div>
     </div>
     <hr>
@@ -93,7 +93,7 @@
         var counts = await osql.connect(count_sql);
         if (counts.length > 0) {
             document.getElementById("video").innerHTML = `<iframe width='${width}' height='${height}' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user" class="mb-3"></div><div id="review"></div>`;
-            document.getElementById("comment-buttons").innerHTML = `<button id="comment-close" type="button" class="btn btn-primary" onclick="closeComments()">コメントを非表示</button><button id="comment-open" type="button" class="btn btn-primary" style="display: none;" onclick="openComments()">コメントを表示</button>`;
+            document.getElementById("comment-button").innerHTML = `<button id="comment-close" type="button" class="btn btn-primary" onclick="closeComments()">コメントを非表示</button><button id="comment-open" type="button" class="btn btn-primary" style="display: none;" onclick="openComments()">コメントを表示</button>`;
             selectComments();
         } else {
             document.getElementById("video").innerHTML = `<iframe width='${width}' height='${height}' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user" class="mb-3"></div><div id="review"></div>`;
@@ -113,17 +113,17 @@
     async function checkVideoReview() {
         var userid = sessionStorage.getItem("userid");
         var videoid = osql.getParam("videoid");
-        var good_sql = `select userid from Goods where userid = "${userid}" and toid = ${videoid};`;
+        var good_sql = `select userid from Goods where userid = "${userid}" and toid = ${videoid} and !is_to_comment;`;
         var good_objects = await osql.connect(good_sql);
         if (good_objects.length > 0) {
-            document.getElementById("review").innerHTML = `<button id="undo-video-good" type="button" class="btn btn-sm btn-secondary" onclick="undoVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="do-video-bad" type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
+            document.getElementById("review").innerHTML = `<button type="button" class="btn btn-sm btn-secondary" onclick="undoVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
         } else {
-            var bad_sql = `select userid from Bads where userid = "${userid}" and toid = ${videoid};`;
+            var bad_sql = `select userid from Bads where userid = "${userid}" and toid = ${videoid} and !is_to_comment;`;
             var bad_objects = await osql.connect(bad_sql);
             if (bad_objects.length > 0) {
-                document.getElementById("review").innerHTML = `<button id="do-video-good" type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="undo-video-bad" type="button" class="btn btn-sm btn-secondary ms-4" onclick="undoVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
+                document.getElementById("review").innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="undo-video-bad" type="button" class="btn btn-sm btn-secondary ms-4" onclick="undoVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
             } else {
-                document.getElementById("review").innerHTML = `<button id="do-video-good" type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="do-video-bad" type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
+                document.getElementById("review").innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
             }
         }
         showVideoReview();
@@ -136,7 +136,7 @@
 
     async function selectVideoGoodsCount() {
         var videoid = osql.getParam("videoid");
-        var sql = `select count(*) as count from Goods where toid = ${videoid} and is_to_comment = false;`;
+        var sql = `select count(*) as count from Goods where toid = ${videoid} and !is_to_comment;`;
         var objects = await osql.connect(sql);
         var count = objects[0].count;
         if (count) {
@@ -148,7 +148,7 @@
 
     async function selectVideoBadsCount() {
         var videoid = osql.getParam("videoid");
-        var sql = `select count(*) as count from Bads where toid = ${videoid} and is_to_comment = false;`;
+        var sql = `select count(*) as count from Bads where toid = ${videoid} and !is_to_comment;`;
         var objects = await osql.connect(sql);
         var count = objects[0].count;
         if (count) {
@@ -158,47 +158,45 @@
         }
     }
 
-
     async function doVideoGood() {
         var userid = sessionStorage.getItem("userid");
         var videoid = osql.getParam("videoid");
         var good_sql = `insert into Goods values ("${userid}", ${videoid}, false)`;
         await osql.connect(good_sql);
-        var bad_sql = `delete from Bads where userid = "${userid}" and toid = ${videoid}`;
+        var bad_sql = `delete from Bads where userid = "${userid}" and toid = ${videoid} and !is_to_comment`;
         await osql.connect(bad_sql);
-        document.getElementById("review").innerHTML = `<button id="undo-video-good" type="button" class="btn btn-sm btn-secondary" onclick="undoVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="do-video-bad" type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
+        document.getElementById("review").innerHTML = `<button type="button" class="btn btn-sm btn-secondary" onclick="undoVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
         showVideoReview();
     }
 
     async function undoVideoGood() {
         var userid = sessionStorage.getItem("userid");
         var videoid = osql.getParam("videoid");
-        var sql = `delete from Goods where userid = "${userid}" and toid = ${videoid}`;
+        var sql = `delete from Goods where userid = "${userid}" and toid = ${videoid} and !is_to_comment`;
         await osql.connect(sql);
-        document.getElementById("review").innerHTML = `<button id="do-video-good" type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="do-video-bad" type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
+        document.getElementById("review").innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
         showVideoReview();
     }
 
     async function doVideoBad() {
         var userid = sessionStorage.getItem("userid");
         var videoid = osql.getParam("videoid");
-        var good_sql = `insert into Bads values ("${userid}", ${videoid}, false)`;
-        await osql.connect(good_sql);
-        var bad_sql = `delete from Goods where userid = "${userid}" and toid = ${videoid}`;
+        var bad_sql = `insert into Bads values ("${userid}", ${videoid}, false)`;
         await osql.connect(bad_sql);
-        document.getElementById("review").innerHTML = `<button id="do-video-good" type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="undo-video-bad" type="button" class="btn btn-sm btn-secondary ms-4" onclick="undoVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
+        var good_sql = `delete from Goods where userid = "${userid}" and toid = ${videoid} and !is_to_comment`;
+        await osql.connect(good_sql);
+        document.getElementById("review").innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="undo-video-bad" type="button" class="btn btn-sm btn-secondary ms-4" onclick="undoVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
         showVideoReview();
     }
 
     async function undoVideoBad() {
         var userid = sessionStorage.getItem("userid");
         var videoid = osql.getParam("videoid");
-        var sql = `delete from Bads where userid = "${userid}" and toid = ${videoid}`;
+        var sql = `delete from Bads where userid = "${userid}" and toid = ${videoid} and !is_to_comment`;
         await osql.connect(sql);
-        document.getElementById("review").innerHTML = `<button id="do-video-good" type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="do-video-bad" type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
+        document.getElementById("review").innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
         showVideoReview();
     }
-
 
     function editNote(note) {
         var userid = sessionStorage.getItem("userid");
@@ -242,7 +240,7 @@
             var count_sql = `select Videos.id from (Videos inner join Users on Videos.userid = Users.id) left join Comments on Videos.id = Comments.toid where Comments.toid = ${videoid} and !is_to_comment;`;
             var counts = await osql.connect(count_sql);
             if (counts.length < 1) {
-                document.getElementById("comment-buttons").innerHTML = `<button id="comment-close" type="button" class="btn btn-primary" onclick="closeComments()">コメントを非表示</button><button id="comment-open" type="button" class="btn btn-primary" style="display: none;" onclick="openComments()">コメントを表示</button>`;
+                document.getElementById("comment-button").innerHTML = `<button id="comment-close" type="button" class="btn btn-primary" onclick="closeComments()">コメントを非表示</button><button id="comment-open" type="button" class="btn btn-primary" style="display: none;" onclick="openComments()">コメントを表示</button>`;
             }
             await osql.connect(sql);
             document.getElementById("input-comment").value = "";
@@ -258,6 +256,10 @@
     }
 
     async function selectComments() {
+        console.log(reply_nums);
+        reply_nums = spare_nums.concat(spare_nums[spare_nums.length - 1] + 1);
+        spare_nums = reply_nums.concat();
+        console.log(reply_nums);
         document.getElementById("comments").innerHTML = "";
         var userid = sessionStorage.getItem("userid");
         var videoid = osql.getParam("videoid");
@@ -269,46 +271,143 @@
             var count_sql = `select Childs.id from (Comments as Parents left join Comments as Childs on Parents.id = Childs.toid) inner join Users on Childs.userid = Users.id where Childs.toid = ${object.comment_id} and Childs.is_to_comment;`;
             var counts = await osql.connect(count_sql);
             if (counts.length > 0) {
-                document.getElementById("comments").innerHTML += `<hr><div id="commenter${i}"></div><div id="comment-review${i}"></div><div id="post-reply${new_reply_num}"><p id="reply-result${new_reply_num}" class="mt-3"><br></p><div id="reply-buttons${new_reply_num}"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.comment_id}, ${new_reply_num}, true)">返信する</button><button id="reply-select${new_reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${object.comment_id}, ${new_reply_num})">返信を表示</button></div><div id="replies${new_reply_num}" class="ms-3"></div>`;
+                document.getElementById("comments").innerHTML += `<hr><div id="commenter${new_reply_num}"></div><div id="comment-review${new_reply_num}"></div><div id="post-reply${new_reply_num}"><p id="reply-result${new_reply_num}" class="mt-3"><br></p><div id="reply-button${new_reply_num}"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.comment_id}, ${new_reply_num}, true)">返信する</button><button id="reply-select${new_reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${object.comment_id}, ${new_reply_num})">返信を表示</button></div><div id="replies${new_reply_num}" class="ms-3"></div>`;
                 document.getElementById("comment-open").style.display = "none";
             } else {
-                document.getElementById("comments").innerHTML += `<hr><div id="commenter${i}"></div><div id="comment-review${i}"></div><div id="post-reply${new_reply_num}"><p id="reply-result${new_reply_num}" class="mt-3"><br></p><div id="reply-buttons${new_reply_num}"><button type="button" class="btn btn-sm btn-success"onclick="showReplyForm(${object.comment_id}, ${new_reply_num}, false)">返信する</button></div><div id="replies${new_reply_num}" class="ms-3"></div>`;
+                document.getElementById("comments").innerHTML += `<hr><div id="commenter${new_reply_num}"></div><div id="comment-review${new_reply_num}"></div><div id="post-reply${new_reply_num}"><p id="reply-result${new_reply_num}" class="mt-3"><br></p><div id="reply-button${new_reply_num}"><button type="button" class="btn btn-sm btn-success"onclick="showReplyForm(${object.comment_id}, ${new_reply_num}, false)">返信する</button></div><div id="replies${new_reply_num}" class="ms-3"></div>`;
             }
-            document.getElementById("commenter" + i).innerHTML = `<a href="profile.html?userid=${object.commenter_id}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${object.name}</a><p class="mb-2">${object.comment}</p>`;
+            document.getElementById("commenter" + new_reply_num).innerHTML = `<a href="profile.html?userid=${object.commenter_id}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${object.name}</a><p class="mb-2">${object.comment}</p>`;
             if (userid === object.commenter_id) {
-                document.getElementById("commenter" + i).innerHTML += `<div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${object.comment}', 'commenter' + ${i}, ${new_reply_num}, ${object.comment_id})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${object.comment_id}, false)">削除</button></div>`;
+                document.getElementById("commenter" + new_reply_num).innerHTML += `<div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${object.comment}', 'commenter' + ${new_reply_num}, ${new_reply_num}, ${object.comment_id}, false)">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${object.comment_id}, false)">削除</button></div>`;
             }
-            document.getElementById("comment-review" + i).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${object.comment_id})">👍</button><span id="comment-good${new_reply_num}" class="ms-2">${object.good}</span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${object.comment_id}, false)">👎</button><span id="comment-bad${new_reply_num}" class="ms-2">${object.bad}</span>`;
-            selectCommentGoodsCount(object.comment_id, new_reply_num);
-            selectCommentBadsCount(object.comment_id, new_reply_num);
+            checkCommentReview(object.comment_id, new_reply_num, false);
         }
     }
 
-    function showCommentReview() {
-        selectCommentGoodsCount();
-        selectCommentBadsCount();
+    async function checkCommentReview(toid, num, isReply) {
+        var userid = sessionStorage.getItem("userid");
+        var good_sql = `select userid from Goods where userid = "${userid}" and toid = ${toid} and is_to_comment;`;
+        var good_objects = await osql.connect(good_sql);
+        if (good_objects.length > 0) {
+            if (!isReply) {
+                document.getElementById("comment-review" + num).innerHTML = `<button type="button" class="btn btn-sm btn-secondary" onclick="undoCommentGood(${toid}, ${num}, ${isReply})">👍</button><span id="comment-good${num}" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${toid}, ${num}, ${isReply})">👎</button><span id="comment-bad${num}" class="ms-2"></span>`;
+            } else {
+                document.getElementById("reply-review" + num).innerHTML = `<button type="button" class="btn btn-sm btn-secondary" onclick="undoCommentGood(${toid}, ${num}, ${isReply})">👍</button><span id="reply-good${num}" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${toid}, ${num}, ${isReply})">👎</button><span id="reply-bad${num}" class="ms-2"></span>`;
+            }
+        } else {
+            var bad_sql = `select userid from Bads where userid = "${userid}" and toid = ${toid} and is_to_comment;`;
+            var bad_objects = await osql.connect(bad_sql);
+            if (bad_objects.length > 0) {
+                if (!isReply) {
+                    document.getElementById("comment-review" + num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${toid}, ${num}, ${isReply})">👍</button><span id="comment-good${num}" class="ms-2"></span><butto type="button" class="btn btn-sm btn-secondary ms-4" onclick="undoCommentBad(${toid}, ${num}, ${isReply})">👎</button><span id="comment-bad${num}" class="ms-2"></span>`;
+                } else {
+                    document.getElementById("reply-review" + num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${toid}, ${num}, ${isReply})">👍</button><span id="reply-good${num}" class="ms-2"></span><button type="button" class="btn btn-sm btn-secondary ms-4" onclick="undoCommentBad(${toid}, ${num}, ${isReply})">👎</button><span id="reply-bad${num}" class="ms-2"></span>`;
+                }
+            } else {
+                if (!isReply) {
+                    document.getElementById("comment-review" + num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${toid}, ${num}, ${isReply})">👍</button><span id="comment-good${num}" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${toid}, ${num}, ${isReply})">👎</button><span id="comment-bad${num}" class="ms-2"></span>`;
+                } else {
+                    document.getElementById("reply-review" + num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${toid}, ${num}, ${isReply})">👍</button><span id="reply-good${num}" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${toid}, ${num}, ${isReply})">👎</button><span id="reply-bad${num}" class="ms-2"></span>`;
+
+                }
+            }
+        }
+        showCommentReview(toid, num, isReply);
     }
 
-    async function selectCommentGoodsCount(toid, num) {
-        var sql = `select count(*) as count from Goods where toid = ${toid} and is_to_comment = true;`;
+    function showCommentReview(toid, num, isReply) {
+        selectCommentGoodsCount(toid, num, isReply);
+        selectCommentBadsCount(toid, num, isReply);
+    }
+
+    async function selectCommentGoodsCount(toid, num, isReply) {
+        var sql = `select count(*) as count from Goods where toid = ${toid} and is_to_comment;`;
         var objects = await osql.connect(sql);
         var count = objects[0].count;
-        if (count) {
-            document.getElementById("comment-good" + num).innerHTML = count;
+        if (!isReply) {
+            if (count) {
+                document.getElementById("comment-good" + num).innerHTML = count;
+            } else {
+                document.getElementById("comment-good" + num).innerHTML = 0;
+            }
         } else {
-            document.getElementById("comment-good" + num).innerHTML = 0;
+            if (count) {
+                document.getElementById("reply-good" + num).innerHTML = count;
+            } else {
+                document.getElementById("reply-good" + num).innerHTML = 0;
+            }
         }
     }
 
-    async function selectCommentBadsCount(toid, num) {
-        var sql = `select count(*) as count from Bads where toid = ${toid} and is_to_comment = true;`;
+    async function selectCommentBadsCount(toid, num, isReply) {
+        var sql = `select count(*) as count from Bads where toid = ${toid} and is_to_comment;`;
         var objects = await osql.connect(sql);
         var count = objects[0].count;
-        if (count) {
-            document.getElementById("comment-bad" + num).innerHTML = count;
+        if (!isReply) {
+            if (count) {
+                document.getElementById("comment-bad" + num).innerHTML = count;
+            } else {
+                document.getElementById("comment-bad" + num).innerHTML = 0;
+            }
         } else {
-            document.getElementById("comment-bad" + num).innerHTML = 0;
+            if (count) {
+                document.getElementById("reply-bad" + num).innerHTML = count;
+            } else {
+                document.getElementById("reply-bad" + num).innerHTML = 0;
+            }
         }
+    }
+
+    async function doCommentGood(toid, num, isReply) {
+        var userid = sessionStorage.getItem("userid");
+        var good_sql = `insert into Goods values ("${userid}", ${toid}, true)`;
+        await osql.connect(good_sql);
+        var bad_sql = `delete from Bads where userid = "${userid}" and toid = ${toid} and is_to_comment`;
+        await osql.connect(bad_sql);
+        if (!isReply) {
+            document.getElementById("comment-review" + num).innerHTML = `<button type="button" class="btn btn-sm btn-secondary" onclick="undoCommentGood(${toid}, ${num}, ${isReply})">👍</button><span id="comment-good${num}" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${toid}, ${num}, ${isReply})">👎</button><span id="comment-bad${num}" class="ms-2"></span>`;
+        } else {
+            document.getElementById("reply-review" + num).innerHTML = `<button type="button" class="btn btn-sm btn-secondary" onclick="undoCommentGood(${toid}, ${num}, ${isReply})">👍</button><span id="reply-good${num}" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${toid}, ${num}, ${isReply})">👎</button><span id="reply-bad${num}" class="ms-2"></span>`;
+        }
+        showCommentReview(toid, num, isReply);
+    }
+
+    async function undoCommentGood(toid, num, isReply) {
+        var userid = sessionStorage.getItem("userid");
+        var sql = `delete from Goods where userid = "${userid}" and toid = ${toid} and is_to_comment`;
+        await osql.connect(sql);
+        if (!isReply) {
+            document.getElementById("comment-review" + num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${toid}, ${num}, ${isReply})">👍</button><span id="comment-good${num}" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${toid}, ${num}, ${isReply})">👎</button><span id="comment-bad${num}" class="ms-2"></span>`;
+        } else {
+            document.getElementById("reply-review" + num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${toid}, ${num}, ${isReply})">👍</button><span id="reply-good${num}" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${toid}, ${num}, ${isReply})">👎</button><span id="reply-bad${num}" class="ms-2"></span>`;
+        }
+        showCommentReview(toid, num, isReply);
+    }
+
+    async function doCommentBad(toid, num, isReply) {
+        var userid = sessionStorage.getItem("userid");
+        var bad_sql = `insert into Bads values ("${userid}", ${toid}, true)`;
+        await osql.connect(bad_sql);
+        var good_sql = `delete from Goods where userid = "${userid}" and toid = ${toid} and is_to_comment`;
+        await osql.connect(good_sql);
+        if (!isReply) {
+            document.getElementById("comment-review" + num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${toid}, ${num}, ${isReply})">👍</button><span id="comment-good${num}" class="ms-2"></span><button type="button" class="btn btn-sm btn-secondary ms-4" onclick="undoCommentBad(${toid}, ${num}, ${isReply})">👎</button><span id="comment-bad${num}" class="ms-2"></span>`;
+        } else {
+            document.getElementById("reply-review" + num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${toid}, ${num}, ${isReply})">👍</button><span id="reply-good${num}" class="ms-2"></span><button type="button" class="btn btn-sm btn-secondary ms-4" onclick="undoCommentBad(${toid}, ${num}, ${isReply})">👎</button><span id="reply-bad${num}" class="ms-2"></span>`;
+        }
+        showCommentReview(toid, num, isReply);
+    }
+
+    async function undoCommentBad(toid, num, isReply) {
+        var userid = sessionStorage.getItem("userid");
+        var sql = `delete from Bads where userid = "${userid}" and toid = ${toid} and is_to_comment`;
+        await osql.connect(sql);
+        if (!isReply) {
+            document.getElementById("comment-review" + num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${toid}, ${num}, ${isReply})">👍</button><span id="comment-good${num}" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${toid}, ${num}, ${isReply})">👎</button><span id="comment-bad${num}" class="ms-2"></span>`;
+        } else {
+            document.getElementById("reply-review" + num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${toid}, ${num}, ${isReply})">👍</button><span id="reply-good${num}" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${toid}, ${num}, ${isReply})">👎</button><span id="reply-bad${num}" class="ms-2"></span>`;
+        }
+        showCommentReview(toid, num, isReply);
     }
 
 
@@ -324,132 +423,34 @@
         document.getElementById("comments").style.display = "block";
     }
 
-    async function selectReplies(toid, reply_num) {
-        var userid = sessionStorage.getItem("userid");
-        var sql = `select name, Childs.userid as replier_id, Childs.id as reply_id, Childs.comment as comment, Childs.good as good, Childs.bad as bad from (Comments as Parents left join Comments as Childs on Parents.id = Childs.toid) inner join Users on Childs.userid = Users.id where Childs.toid = ${toid} and Childs.is_to_comment;`;
-        var objects = await osql.connect(sql);
-        for (let i = 0; i < objects.length; i++) {
-            object = objects[i];
-            new_reply_num = reply_nums.pop();
-            var count_sql = `select Childs.id from (Comments as Parents inner join Users on Parents.userid = Users.id) left join Comments as Childs on Parents.id = Childs.toid where Childs.toid = ${object.reply_id} and Childs.is_to_comment;`;
-            var counts = await osql.connect(count_sql);
-            if (counts.length > 0) {
-                document.getElementById("replies" + reply_num).innerHTML += `<hr><div id="replier${new_reply_num}"></div><div id="reply-review${new_reply_num}"></div><div id="post-reply${new_reply_num}"><div id="reply-buttons${new_reply_num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.reply_id}, ${new_reply_num}, true)">返信する</button><button id="reply-select${new_reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${object.reply_id}, ${new_reply_num})">返信を表示</button></div></div><div id="replies${new_reply_num}" class="ms-3"></div>`;
-            } else {
-                document.getElementById("replies" + reply_num).innerHTML += `<hr><div id="replier${new_reply_num}"></div><div id="reply-review${new_reply_num}"></div><div id="post-reply${new_reply_num}"><div id="reply-buttons${new_reply_num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.reply_id}, ${new_reply_num}, false)">返信する</button></div></div><div id="replies${new_reply_num}" class="ms-3"></div>`;
-            }
-            document.getElementById("replier" + new_reply_num).innerHTML = `<a href="profile.html?userid=${object.replier_id}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${object.name}</a><p class="mb-2">${object.comment}</p>`;
-            if (userid === object.replier_id) {
-                document.getElementById("replier" + new_reply_num).innerHTML += `<div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${object.comment}', 'replier' + ${new_reply_num}, ${new_reply_num}, ${object.reply_id})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${object.reply_id})">削除</button></div>`;
-            }
-            document.getElementById("reply-review" + new_reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${object.reply_id})">👍</button><span id="reply-good${new_reply_num}" class="ms-2">${object.good}</span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${object.reply_id})">👎</button><span id="reply-bad${new_reply_num}" class="ms-2">${object.bad}</span>`;
-            selectReplyGoodsCount(object.reply_id, new_reply_num);
-            selectReplyBadsCount(object.reply_id, new_reply_num);
-            document.getElementById("reply-buttons" + reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${toid}, ${reply_num}, true)">返信する</button><button id="reply-open${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" style="display: none;" onclick="openReplies(${toid}, ${reply_num})">返信を表示</button><button id="reply-close${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="closeReplies(${toid}, ${reply_num})">返信を非表示</button>`;
-            console.log(reply_nums);
-            reply_nums = spare_nums.concat(spare_nums[spare_nums.length - 1] + 1);
-            spare_nums = reply_nums.concat();
-            console.log(reply_nums);
-        }
-    }
-
-    function showReplyReview() {
-        selectReplyGoodsCount();
-        selectReplyBadsCount();
-    }
-
-    async function selectReplyGoodsCount(toid, num) {
-        var sql = `select count(*) as count from Goods where toid = ${toid} and is_to_comment = true;`;
-        var objects = await osql.connect(sql);
-        var count = objects[0].count;
-        if (count) {
-            document.getElementById("reply-good" + num).innerHTML = count;
-        } else {
-            document.getElementById("reply-good" + num).innerHTML = 0;
-        }
-    }
-
-    async function selectReplyBadsCount(toid, num) {
-        var sql = `select count(*) as count from Bads where toid = ${toid} and is_to_comment = true;`;
-        var objects = await osql.connect(sql);
-        var count = objects[0].count;
-        if (count) {
-            document.getElementById("reply-bad" + num).innerHTML = count;
-        } else {
-            document.getElementById("reply-bad" + num).innerHTML = 0;
-        }
-    }
-
-
-    function closeReplies(toid, reply_num) {
-        document.getElementById("reply-buttons" + reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${toid}, ${reply_num}, true)">返信する</button><button id="reply-open${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="openReplies(${toid}, ${reply_num})">返信を表示</button>`;
-        document.getElementById("replies" + reply_num).style.display = "none";
-    }
-
-    function openReplies(toid, reply_num) {
-        document.getElementById("reply-buttons" + reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${toid}, ${reply_num}, true)">返信する</button><button id="reply-close${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="closeReplies(${toid}, ${reply_num})">返信を非表示</button>`;
-        document.getElementById("replies" + reply_num).style.display = "block";
-    }
-
-    function showReplyForm(toid, num, hasReplies) {
-        document.getElementById("post-reply" + num).innerHTML = `<p id="reply-result${num}" class="mt-3"><br></p><div class="mb-3"><input id="input-reply${num}" class="form-control"></input><div class="mt-3"><button type="button" class="btn btn-sm btn-primary" onclick="postReply(${toid}, ${num})">投稿</button> <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="cancelReply(${toid}, ${num}, ${hasReplies})">取消</button></div></div>`;
-    }
-
-    async function postReply(toid, num) {
-        var userid = sessionStorage.getItem("userid");
-        var reply = document.getElementById("input-reply" + num).value;
-        var sql = `insert into Comments (userid, comment, toid, is_to_comment) values ("${userid}", "${reply}", ${toid}, true);`;
-        if (reply.length > 0) {
-            await osql.connect(sql);
-            document.getElementById("input-reply" + num).value = "";
-            cancelReply(toid, num, true);
-            document.getElementById("reply-result" + num).innerHTML = "返信しました";
-            document.getElementById("comment-result").innerHTML = "<br>";
-            console.log(reply_nums);
-            reply_nums = spare_nums.concat(spare_nums[spare_nums.length - 1] + 1);
-            spare_nums = reply_nums.concat();
-            console.log(reply_nums);
-        } else {
-            document.getElementById("reply-result" + num).innerHTML = `<span class=text-danger>*</span>投稿失敗: 返信内容を入力してください`;
-        }
-    }
-
-    function cancelReply(comment_id, num, hasReplies) {
-        if (hasReplies) {
-            document.getElementById("post-reply" + num).innerHTML = `<p id="reply-result${num}" class="mt-3"><br></p><div id="reply-buttons${num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${comment_id}, ${num}, true)">返信する</button><button id="reply-select${num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${comment_id}, ${num})">返信を表示</button></div><div id="replies${num}" class="ms-3"></div>`;
-        } else {
-            document.getElementById("post-reply" + num).innerHTML = `<p id="reply-result${num}" class="mt-3"><br></p><div id="reply-buttons${num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${comment_id}, ${num}, false)">返信する</button></div><div id="replies${num}" class="ms-3"></div>`;
-        }
-    }
-
-    function editComment(comment, input_id, num, comment_id) {
+    function editComment(comment, input_id, num, comment_id, is_to_comment, toid, reply_num) {
         var userid = sessionStorage.getItem("userid");
         var username = sessionStorage.getItem("username");
-        document.getElementById(input_id).innerHTML = `<div class="mb-3"><a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${username}</a><input id="edit-comment${num}" class="form-control" value="${comment}"></input><div class="mt-3"><button type="button" class="btn btn-sm btn-primary" onclick="updateComment('${comment}', '${input_id}', ${num}, ${comment_id})">更新</button><button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="cancelEditComment('${comment}', '${input_id}', ${num}, ${comment_id})">取消</button></div></div>`;
+        document.getElementById(input_id).innerHTML = `<div class="mb-3"><a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${username}</a><input id="edit-comment${num}" class="form-control" value="${comment}"></input><div class="mt-3"><button type="button" class="btn btn-sm btn-primary" onclick="updateComment('${comment}', '${input_id}', ${num}, ${comment_id}, ${is_to_comment}, ${toid}, ${reply_num})">更新</button><button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="cancelEditComment('${comment}', '${input_id}', ${num}, ${comment_id}, ${is_to_comment}, ${toid}, ${reply_num})">取消</button></div></div>`;
     }
 
-    function cancelEditComment(comment, input_id, num, comment_id) {
+    function cancelEditComment(comment, input_id, num, comment_id, is_to_comment, toid, reply_num) {
         var userid = sessionStorage.getItem("userid");
         var username = sessionStorage.getItem("username");
-        document.getElementById(input_id).innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${username}</a><p class="mb-2">${comment}</p><div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${comment}', '${input_id}', ${num}, ${comment_id})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${comment_id}, true)">削除</button><div>`;
+        document.getElementById(input_id).innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${username}</a><p class="mb-2">${comment}</p><div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${comment}', '${input_id}', ${num}, ${comment_id}, ${is_to_comment})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${comment_id}, ${is_to_comment}, ${toid}, ${reply_num})">削除</button><div>`;
         document.getElementById("reply-result" + num).innerHTML = "<br>";
     }
 
-    async function updateComment(comment, input_id, num, comment_id) {
+    async function updateComment(comment, input_id, num, comment_id, is_to_comment, toid, reply_num) {
         var userid = sessionStorage.getItem("userid");
         var username = sessionStorage.getItem("username");
         var new_comment = document.getElementById("edit-comment" + num).value;
         var sql = `update Comments set comment = "${new_comment}" where id = ${comment_id};`;
         if (new_comment.length > 0) {
             await osql.connect(sql);
-            document.getElementById(input_id).innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${username}</a><p class="mb-2">${new_comment}</p><div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${new_comment}', '${input_id}', ${num}, ${comment_id})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${comment_id}, true)">削除</button><div>`;
+            document.getElementById(input_id).innerHTML = `<a href="profile.html?userid=${userid}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${username}</a><p class="mb-2">${new_comment}</p><div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${new_comment}', '${input_id}', ${num}, ${comment_id}, ${toid}, ${reply_num})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${comment_id}, ${is_to_comment}, ${toid}, ${reply_num})">削除</button><div>`;
             document.getElementById("reply-result" + num).innerHTML = "更新しました";
         } else {
-            document.getElementById("reply-result" + num).innerHTML = "コメントは1文字以上必要です";
+            document.getElementById("reply-result" + num).innerHTML = `<span class="text-danger">*</span>コメントは1文字以上必要です`;
         }
     }
 
-    async function deleteComment(comment_id, is_to_comment) {
+    async function deleteComment(comment_id, is_to_comment, toid, num) {
         var videoid = osql.getParam("videoid");
         var sql = `delete from Comments where id = ${comment_id};`;
         var isConfirmed = window.confirm("コメントを削除してよろしいですか？");
@@ -463,39 +464,86 @@
                 reply_nums = spare_nums.concat();
                 console.log(reply_nums);
                 if (counts.length < 1) {
-                    document.getElementById("comment-buttons").innerHTML = "";
+                    document.getElementById("comment-button").innerHTML = "";
                     document.getElementById("comments").innerHTML = "まだコメントはありません"
                 } else {
                     selectComments();
                 }
             } else {
-                selectReplies();
+                cancelReply(toid, num);
             }
         }
     }
 
-    async function doCommentGood(comment_id) {
-        var sql = `update Comments set good = good + 1 where id = ${comment_id};`;
-        await osql.connect(sql);
-        location.reload()
+
+    async function selectReplies(toid, reply_num) {
+        console.log(reply_nums);
+        reply_nums = spare_nums.concat(spare_nums[spare_nums.length - 1] + 1);
+        spare_nums = reply_nums.concat();
+        console.log(reply_nums);
+        var userid = sessionStorage.getItem("userid");
+        var sql = `select name, Childs.userid as replier_id, Childs.id as reply_id, Childs.comment as comment, Childs.good as good, Childs.bad as bad from (Comments as Parents left join Comments as Childs on Parents.id = Childs.toid) inner join Users on Childs.userid = Users.id where Childs.toid = ${toid} and Childs.is_to_comment;`;
+        var objects = await osql.connect(sql);
+        for (let i = 0; i < objects.length; i++) {
+            object = objects[i];
+            new_reply_num = reply_nums.pop();
+            var count_sql = `select Childs.id from (Comments as Parents inner join Users on Parents.userid = Users.id) left join Comments as Childs on Parents.id = Childs.toid where Childs.toid = ${object.reply_id} and Childs.is_to_comment;`;
+            var counts = await osql.connect(count_sql);
+            if (counts.length > 0) {
+                document.getElementById("replies" + reply_num).innerHTML += `<hr><div id="replier${new_reply_num}"></div><div id="reply-review${new_reply_num}"></div><div id="post-reply${new_reply_num}"><p id="reply-result${new_reply_num}" class="mt-3"><br></p><div id="reply-button${new_reply_num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.reply_id}, ${new_reply_num}, true)">返信する</button><button id="reply-select${new_reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${object.reply_id}, ${new_reply_num})">返信を表示</button></div></div><div id="replies${new_reply_num}" class="ms-3"></div>`;
+            } else {
+                document.getElementById("replies" + reply_num).innerHTML += `<hr><div id="replier${new_reply_num}"></div><div id="reply-review${new_reply_num}"></div><div id="post-reply${new_reply_num}"><p id="reply-result${new_reply_num}" class="mt-3"><br></p><div id="reply-button${new_reply_num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.reply_id}, ${new_reply_num}, false)">返信する</button></div></div><div id="replies${new_reply_num}" class="ms-3"></div>`;
+            }
+            document.getElementById("replier" + new_reply_num).innerHTML = `<a href="profile.html?userid=${object.replier_id}" class="btn btn-sm btn-outline-dark mt-1 mb-3">${object.name}</a><p class="mb-2">${object.comment}</p>`;
+            if (userid === object.replier_id) {
+                document.getElementById("replier" + new_reply_num).innerHTML += `<div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${object.comment}', 'replier' + ${new_reply_num}, ${new_reply_num}, ${object.reply_id}, ${toid}, ${reply_num})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${object.reply_id}, true, ${toid}, ${reply_num})">削除</button></div>`;
+            }
+            checkCommentReview(object.reply_id, new_reply_num, true);
+            document.getElementById("reply-button" + reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${object.reply_id}, ${reply_num}, true)">返信する</button><button id="reply-open${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" style="display: none;" onclick="openReplies(${object.reply_id}, ${reply_num})">返信を表示</button><button id="reply-close${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="closeReplies(${toid}, ${reply_num})">返信を非表示</button>`;
+        }
     }
 
-    async function undoCommentGood(comment_id) {
-        var sql = `update Comments set good = good - 1 where id = ${comment_id};`;
-        await osql.connect(sql);
-        location.reload()
+    function closeReplies(toid, reply_num) {
+        document.getElementById("reply-button" + reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${toid}, ${reply_num}, true)">返信する</button><button id="reply-open${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="openReplies(${toid}, ${reply_num})">返信を表示</button>`;
+        document.getElementById("replies" + reply_num).style.display = "none";
     }
 
-    async function doCommentBad(comment_id) {
-        var sql = `update Comments set bad = bad + 1 where id = ${comment_id};`;
-        await osql.connect(sql);
-        location.reload()
+    function openReplies(toid, reply_num) {
+        document.getElementById("reply-button" + reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${toid}, ${reply_num}, true)">返信する</button><button id="reply-close${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="closeReplies(${toid}, ${reply_num})">返信を非表示</button>`;
+        document.getElementById("replies" + reply_num).style.display = "block";
     }
 
-    async function undoCommentBad(comment_id) {
-        var sql = `update Comments set bad = bad - 1 where id = ${comment_id};`;
-        await osql.connect(sql);
-        location.reload()
+    function showReplyForm(toid, num, hasReplies) {
+        document.getElementById("post-reply" + num).innerHTML = `<p id="reply-result${num}" class="mt-3"><br></p><div class="mb-3"><input id="input-reply${num}" class="form-control"></input><div class="mt-3"><button type="button" class="btn btn-sm btn-primary" onclick="postReply(${toid}, ${num})">投稿</button> <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="cancelReply(${toid}, ${num})">取消</button></div></div>`;
+    }
+
+    async function postReply(toid, num) {
+        var userid = sessionStorage.getItem("userid");
+        var reply = document.getElementById("input-reply" + num).value;
+        var sql = `insert into Comments (userid, comment, toid, is_to_comment) values ("${userid}", "${reply}", ${toid}, true);`;
+        if (reply.length > 0) {
+            await osql.connect(sql);
+            document.getElementById("input-reply" + num).value = "";
+            cancelReply(toid, num);
+            document.getElementById("reply-result" + num).innerHTML = "返信しました";
+            document.getElementById("comment-result").innerHTML = "<br>";
+            console.log(reply_nums);
+            reply_nums = spare_nums.concat(spare_nums[spare_nums.length - 1] + 1);
+            spare_nums = reply_nums.concat();
+            console.log(reply_nums);
+        } else {
+            document.getElementById("reply-result" + num).innerHTML = `<span class=text-danger>*</span>投稿失敗: 返信内容を入力してください`;
+        }
+    }
+
+    async function cancelReply(comment_id, num) {
+        var count_sql = `select Childs.id from (Comments as Parents inner join Users on Parents.userid = Users.id) left join Comments as Childs on Parents.id = Childs.toid where Childs.toid = ${comment_id} and Childs.is_to_comment;`;
+        var counts = await osql.connect(count_sql);
+        if (counts.length > 0) {
+            document.getElementById("post-reply" + num).innerHTML = `<p id="reply-result${num}" class="mt-3"><br></p><div id="reply-button${num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${comment_id}, ${num}, true)">返信する</button><button id="reply-select${num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="selectReplies(${comment_id}, ${num})">返信を表示</button></div><div id="replies${num}" class="ms-3"></div>`;
+        } else {
+            document.getElementById("post-reply" + num).innerHTML = `<p id="reply-result${num}" class="mt-3"><br></p><div id="reply-button${num}" class="my-3"><button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${comment_id}, ${num}, false)">返信する</button></div><div id="replies${num}" class="ms-3"></div>`;
+        }
     }
 </script>
 
