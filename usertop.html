@@ -80,7 +80,7 @@
             location.href = "index.html";
         } else {
             setParam();
-            doSelect();
+            selectVideos();
         }
     }
 
@@ -93,9 +93,9 @@
         osql.logout();
     }
 
-    async function doSelect() {
+    async function selectVideos() {
         var userid = sessionStorage.getItem("userid");
-        var sql = "select Videos.id as videoid, url, note, good, bad, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id order by videoid desc;";
+        var sql = "select Videos.id as videoid, url, note, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id order by videoid desc;";
         var objects = await osql.connect(sql);
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];
@@ -105,11 +105,28 @@
                 document.getElementById("videos").innerHTML += `<div id="post${i}" class="card border-dark bg-light col p-4 mb-3 mx-2"><iframe width='256' height='144' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user${i}"></div><p id="review${i}"></p><div class="my-3"><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></div><div id="delete${i}" class="float-end"></div></div>`;
             }
             document.getElementById("user" + i).innerHTML = `<a href="profile.html?userid=${object.userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${object.name}</a><p class="mt-2 text-break" style="width: 256px;">${object.note}</p>`;
-            document.getElementById("review" + i).innerHTML = `👍 ${object.good} <span class="m-3">👎 ${object.bad}</span>`;
+            document.getElementById("review" + i).innerHTML = `<div>👍<span id="good${i}" class="ms-2"></span><span class="ms-4">👎<span id="bad${i}" class="ms-2"></span></span></div>`;
+            selectGoodsCount(object.videoid, i);
+            selectBadsCount(object.videoid, i);
             if (object.userid === userid) {
                 document.getElementById("delete" + i).innerHTML = `<button type="button" class="btn btn-sm btn-danger" onclick="doDelete(${object.videoid}, ${i})">削除</button>`;
             }
         }
+    }
+
+    async function selectGoodsCount(toid, num) {
+        var userid = sessionStorage.getItem("userid");
+        var sql = `select count(*) as count from Goods where toid = ${toid} and is_to_comment = false;`;
+        var objects = await osql.connect(sql);
+        var count = objects[0].count;
+        document.getElementById("good" + num).innerHTML = count;
+    }
+
+    async function selectBadsCount(toid, num) {
+        var userid = sessionStorage.getItem("userid");
+        var sql = `select count(*) as count from Bads where toid = ${toid} and is_to_comment = false;`;
+        var objects = await osql.connect(sql);
+        document.getElementById("bad" + num).innerHTML = count;
     }
 
     function resetResult() {
@@ -126,7 +143,7 @@
             var note = document.getElementById("note").value;
             var sql = `insert into Videos (userid, url, note) values ("${userid}", "${youtube_id[1]}", "${note}");`;
             await osql.connect(sql);
-            doSelect();
+            selectVideos();
             document.getElementById("url").value = "";
             document.getElementById("note").value = "";
             document.getElementById("result").innerHTML = "投稿しました";
