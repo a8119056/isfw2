@@ -51,7 +51,7 @@
             </div>
         </div>
 
-        <h3>投稿一覧</h3>
+        <h3 id="posts"></h3>
         <div id="videos" class="row row-cols-auto mt-3">まだ投稿がありません</div>
     </div>
     <hr>
@@ -131,6 +131,7 @@
         var object = objects[0];
         document.getElementById("profile-header").innerHTML = object.name;
         document.getElementById("title").innerHTML = `${object.name}さんのプロフィール | 動画共有SNS`;
+        document.getElementById("posts").innerHTML = `${object.name}さんの投稿`;
         if (object.bio === null) {
             document.getElementById("bio").innerHTML = `<span class="text-muted">(未設定)</span>`;
         } else {
@@ -207,15 +208,41 @@
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];
             if (i < 1) {
-                document.getElementById("videos").innerHTML = `<div id="post${i}" class="card border-dark bg-light col p-4 mb-3 mx-2"><iframe width='256' height='144' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user${i}"></div><p id="review${i}"></p><div class="my-3"><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></div><div id="delete${i}" class="float-end"></div></div>`;
+                document.getElementById("videos").innerHTML = `<div id="post${i}" class="card border-dark bg-light col p-4 mb-3 mx-2"><iframe width='256' height='144' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user${i}" class="mt-2"></div><div id="review${i}"></div><div class="my-3"><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></div><div id="delete${i}" class="float-end"></div></div>`;
             } else {
-                document.getElementById("videos").innerHTML += `<div  id="post${i}" class="card border-dark bg-light col p-4 mb-3 mx-2"><iframe width='256' height='144' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user${i}"></div><p id="review${i}"></p><div class="my-3"><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></div><div id="delete${i}" class="float-end"></div></div>`;
+                document.getElementById("videos").innerHTML += `<div  id="post${i}" class="card border-dark bg-light col p-4 mb-3 mx-2"><iframe width='256' height='144' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user${i}" class="mt-2"></div><div id="review${i}"></div><div class="my-3"><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></div><div id="delete${i}" class="float-end"></div></div>`;
             }
-            document.getElementById("user" + i).innerHTML = `<a href="profile.html?userid=${object.userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${object.name}</a><p class="mt-2 text-break" style="width: 256px;">${object.note}</p>`;
-            document.getElementById("review" + i).innerHTML = `👍 ${object.good} <span class="m-3">👎 ${object.bad}</span>`;
+            document.getElementById("user" + i).innerHTML = `<p class="mt-2 text-break" style="width: 256px;">${object.note}</p>`;
+            document.getElementById("review" + i).innerHTML = `👍<span id="good${i}" class="ms-2"></span><span class="ms-4">👎<span id="bad${i}" class="ms-2"></span></span>`;
+            selectGoodsCount(object.videoid, i);
+            selectBadsCount(object.videoid, i);
             if (object.userid === login_id) {
                 document.getElementById("delete" + i).innerHTML = `<button type="button" class="btn btn-sm btn-danger" onclick="doDelete(${object.videoid}, ${i})">削除</button>`;
             }
+        }
+    }
+
+    async function selectGoodsCount(toid, num) {
+        var userid = sessionStorage.getItem("userid");
+        var sql = `select count(*) as count from Goods where toid = ${toid} and is_to_comment = false;`;
+        var objects = await osql.connect(sql);
+        var count = objects[0].count;
+        if (count) {
+            document.getElementById("good" + num).innerHTML = count;
+        } else {
+            document.getElementById("good" + num).innerHTML = 0;
+        }
+    }
+
+    async function selectBadsCount(toid, num) {
+        var userid = sessionStorage.getItem("userid");
+        var sql = `select count(*) as count from Bads where toid = ${toid} and is_to_comment = false;`;
+        var objects = await osql.connect(sql);
+        var count = objects[0].count;
+        if (count) {
+            document.getElementById("bad" + num).innerHTML = count;
+        } else {
+            document.getElementById("bad" + num).innerHTML = 0;
         }
     }
 
