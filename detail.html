@@ -54,7 +54,7 @@
             location.href = "index.html";
         } else {
             countComments();
-            doSelect();
+            selectVideo();
         }
     }
 
@@ -75,7 +75,7 @@
         console.log(spare_nums);
     }
 
-    async function doSelect() {
+    async function selectVideo() {
         var element = document.getElementById("video");
         var width = parseInt(window.getComputedStyle(element).width);
         if (width > 736) {
@@ -107,7 +107,33 @@
         if (userid === object.userid) {
             document.getElementById("user").innerHTML += `<button type="button" class="btn btn-sm btn-primary" onclick="editNote('${object.note}')">編集</button>`;
         }
-        document.getElementById("review").innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood(${videoid})">👍</button><span class="ms-2">${object.good}</span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad(${videoid})">👎</button><span class="ms-2">${object.bad}</span>`;
+        document.getElementById("review").innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood(${videoid})">👍</button><span id="video-good" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad(${videoid})">👎</button><span id="video-bad" class="ms-2"></span>`;
+        selectVideoGoodsCount();
+        selectVideoBadsCount();
+    }
+
+    async function selectVideoGoodsCount() {
+        var videoid = osql.getParam("videoid");
+        var sql = `select count(*) as count from Goods where toid = ${videoid} and is_to_comment = false;`;
+        var objects = await osql.connect(sql);
+        var count = objects[0].count;
+        if (count) {
+            document.getElementById("video-good").innerHTML = count;
+        } else {
+            document.getElementById("video-good").innerHTML = 0;
+        }
+    }
+
+    async function selectVideoBadsCount() {
+        var videoid = osql.getParam("videoid");
+        var sql = `select count(*) as count from Bads where toid = ${videoid} and is_to_comment = false;`;
+        var objects = await osql.connect(sql);
+        var count = objects[0].count;
+        if (count) {
+            document.getElementById("video-bad").innerHTML = count;
+        } else {
+            document.getElementById("video-bad").innerHTML = 0;
+        }
     }
 
 
@@ -189,7 +215,31 @@
             if (userid === object.commenter_id) {
                 document.getElementById("commenter" + i).innerHTML += `<div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${object.comment}', 'commenter' + ${i}, ${new_reply_num}, ${object.comment_id})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${object.comment_id}, false)">削除</button></div>`;
             }
-            document.getElementById("comment-review" + i).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${object.comment_id})">👍</button><span class="ms-2">${object.good}</span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${object.comment_id}, false)">👎</button><span class="ms-2">${object.bad}</span>`;
+            document.getElementById("comment-review" + i).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${object.comment_id})">👍</button><span id="comment-good${new_reply_num}" class="ms-2">${object.good}</span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${object.comment_id}, false)">👎</button><span id="comment-bad${new_reply_num}" class="ms-2">${object.bad}</span>`;
+            selectCommentGoodsCount(object.comment_id, new_reply_num);
+            selectCommentBadsCount(object.comment_id, new_reply_num);
+        }
+    }
+
+    async function selectCommentGoodsCount(toid, num) {
+        var sql = `select count(*) as count from Goods where toid = ${toid} and is_to_comment = true;`;
+        var objects = await osql.connect(sql);
+        var count = objects[0].count;
+        if (count) {
+            document.getElementById("comment-good" + num).innerHTML = count;
+        } else {
+            document.getElementById("comment-good" + num).innerHTML = 0;
+        }
+    }
+
+    async function selectCommentBadsCount(toid, num) {
+        var sql = `select count(*) as count from Bads where toid = ${toid} and is_to_comment = true;`;
+        var objects = await osql.connect(sql);
+        var count = objects[0].count;
+        if (count) {
+            document.getElementById("comment-bad" + num).innerHTML = count;
+        } else {
+            document.getElementById("comment-bad" + num).innerHTML = 0;
         }
     }
 
@@ -224,12 +274,36 @@
             if (userid === object.replier_id) {
                 document.getElementById("replier" + new_reply_num).innerHTML += `<div class="my-3"><button type="button" class="btn btn-sm btn-primary" onclick="editComment('${object.comment}', 'replier' + ${new_reply_num}, ${new_reply_num}, ${object.reply_id})">編集</button><button type="button" class="btn btn-sm btn-danger ms-2" onclick="deleteComment(${object.reply_id})">削除</button></div>`;
             }
-            document.getElementById("reply-review" + new_reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${object.reply_id})">👍</button><span class="ms-2">${object.good}</span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${object.reply_id})">👎</button><span class="ms-2">${object.bad}</span>`;
+            document.getElementById("reply-review" + new_reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doCommentGood(${object.reply_id})">👍</button><span id="reply-good${new_reply_num}" class="ms-2">${object.good}</span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doCommentBad(${object.reply_id})">👎</button><span id="reply-bad${new_reply_num}" class="ms-2">${object.bad}</span>`;
+            selectReplyGoodsCount(object.reply_id, new_reply_num);
+            selectReplyBadsCount(object.reply_id, new_reply_num);
             document.getElementById("reply-buttons" + reply_num).innerHTML = `<button type="button" class="btn btn-sm btn-success" onclick="showReplyForm(${toid}, ${reply_num}, true)">返信する</button><button id="reply-open${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" style="display: none;" onclick="openReplies(${toid}, ${reply_num})">返信を表示</button><button id="reply-close${reply_num}" type="button" class="btn btn-sm btn-primary ms-2" onclick="closeReplies(${toid}, ${reply_num})">返信を非表示</button>`;
             console.log(reply_nums);
             reply_nums = spare_nums.concat(spare_nums[spare_nums.length - 1] + 1);
             spare_nums = reply_nums.concat();
             console.log(reply_nums);
+        }
+    }
+
+    async function selectReplyGoodsCount(toid, num) {
+        var sql = `select count(*) as count from Goods where toid = ${toid} and is_to_comment = true;`;
+        var objects = await osql.connect(sql);
+        var count = objects[0].count;
+        if (count) {
+            document.getElementById("reply-good" + num).innerHTML = count;
+        } else {
+            document.getElementById("reply-good" + num).innerHTML = 0;
+        }
+    }
+
+    async function selectReplyBadsCount(toid, num) {
+        var sql = `select count(*) as count from Bads where toid = ${toid} and is_to_comment = true;`;
+        var objects = await osql.connect(sql);
+        var count = objects[0].count;
+        if (count) {
+            document.getElementById("reply-bad" + num).innerHTML = count;
+        } else {
+            document.getElementById("reply-bad" + num).innerHTML = 0;
         }
     }
 
