@@ -93,7 +93,7 @@
         var counts = await osql.connect(count_sql);
         if (counts.length > 0) {
             document.getElementById("video").innerHTML = `<iframe width='${width}' height='${height}' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user" class="mb-3"></div><div id="review"></div>`;
-            document.getElementById("comment-buttons").innerHTML = `<button id="comment-close" type="button" class="btn btn-primary" onclick="closeComments()">コメントを非表示</button><button id="comment-open" type="button" class="btn btn-primary" style="display:none;" onclick="openComments()">コメントを表示</button>`;
+            document.getElementById("comment-buttons").innerHTML = `<button id="comment-close" type="button" class="btn btn-primary" onclick="closeComments()">コメントを非表示</button><button id="comment-open" type="button" class="btn btn-primary" style="display: none;" onclick="openComments()">コメントを表示</button>`;
             selectComments();
         } else {
             document.getElementById("video").innerHTML = `<iframe width='${width}' height='${height}' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user" class="mb-3"></div><div id="review"></div>`;
@@ -107,7 +107,29 @@
         if (userid === object.userid) {
             document.getElementById("user").innerHTML += `<button type="button" class="btn btn-sm btn-primary" onclick="editNote('${object.note}')">編集</button>`;
         }
-        document.getElementById("review").innerHTML = `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood(${videoid})">👍</button><span id="video-good" class="ms-2"></span><button type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad(${videoid})">👎</button><span id="video-bad" class="ms-2"></span>`;
+        checkVideoReview();
+    }
+
+    async function checkVideoReview() {
+        var userid = sessionStorage.getItem("userid");
+        var videoid = osql.getParam("videoid");
+        var good_sql = `select userid from Goods where userid = "${userid}" and toid = ${videoid};`;
+        var good_objects = await osql.connect(good_sql);
+        if (good_objects.length > 0) {
+            document.getElementById("review").innerHTML = `<button id="undo-video-good" type="button" class="btn btn-sm btn-secondary" onclick="undoVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="do-video-bad" type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
+        } else {
+            var bad_sql = `select userid from Bads where userid = "${userid}" and toid = ${videoid};`;
+            var bad_objects = await osql.connect(bad_sql);
+            if (bad_objects.length > 0) {
+                document.getElementById("review").innerHTML = `<button id="do-video-good" type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="undo-video-bad" type="button" class="btn btn-sm btn-secondary ms-4" onclick="undoVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
+            } else {
+                document.getElementById("review").innerHTML = `<button id="do-video-good" type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="do-video-bad" type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
+            }
+        }
+        showVideoReview();
+    }
+
+    function showVideoReview() {
         selectVideoGoodsCount();
         selectVideoBadsCount();
     }
@@ -134,6 +156,47 @@
         } else {
             document.getElementById("video-bad").innerHTML = 0;
         }
+    }
+
+
+    async function doVideoGood() {
+        var userid = sessionStorage.getItem("userid");
+        var videoid = osql.getParam("videoid");
+        var good_sql = `insert into Goods values ("${userid}", ${videoid}, false)`;
+        await osql.connect(good_sql);
+        var bad_sql = `delete from Bads where userid = "${userid}" and toid = ${videoid}`;
+        await osql.connect(bad_sql);
+        document.getElementById("review").innerHTML = `<button id="undo-video-good" type="button" class="btn btn-sm btn-secondary" onclick="undoVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="do-video-bad" type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
+        showVideoReview();
+    }
+
+    async function undoVideoGood() {
+        var userid = sessionStorage.getItem("userid");
+        var videoid = osql.getParam("videoid");
+        var sql = `delete from Goods where userid = "${userid}" and toid = ${videoid}`;
+        await osql.connect(sql);
+        document.getElementById("review").innerHTML = `<button id="do-video-good" type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="do-video-bad" type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
+        showVideoReview();
+    }
+
+    async function doVideoBad() {
+        var userid = sessionStorage.getItem("userid");
+        var videoid = osql.getParam("videoid");
+        var good_sql = `insert into Bads values ("${userid}", ${videoid}, false)`;
+        await osql.connect(good_sql);
+        var bad_sql = `delete from Goods where userid = "${userid}" and toid = ${videoid}`;
+        await osql.connect(bad_sql);
+        document.getElementById("review").innerHTML = `<button id="do-video-good" type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="undo-video-bad" type="button" class="btn btn-sm btn-secondary ms-4" onclick="undoVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
+        showVideoReview();
+    }
+
+    async function undoVideoBad() {
+        var userid = sessionStorage.getItem("userid");
+        var videoid = osql.getParam("videoid");
+        var sql = `delete from Bads where userid = "${userid}" and toid = ${videoid}`;
+        await osql.connect(sql);
+        document.getElementById("review").innerHTML = `<button id="do-video-good" type="button" class="btn btn-sm btn-outline-secondary" onclick="doVideoGood()">👍</button><span id="video-good" class="ms-2"></span><button id="do-video-bad" type="button" class="btn btn-sm btn-outline-secondary ms-4" onclick="doVideoBad()">👎</button><span id="video-bad" class="ms-2"></span>`;
+        showVideoReview();
     }
 
 
@@ -179,7 +242,7 @@
             var count_sql = `select Videos.id from (Videos inner join Users on Videos.userid = Users.id) left join Comments on Videos.id = Comments.toid where Comments.toid = ${videoid} and !is_to_comment;`;
             var counts = await osql.connect(count_sql);
             if (counts.length < 1) {
-                document.getElementById("comment-buttons").innerHTML = `<button id="comment-close" type="button" class="btn btn-primary" onclick="closeComments()">コメントを非表示</button><button id="comment-open" type="button" class="btn btn-primary" style="display:none;" onclick="openComments()">コメントを表示</button>`;
+                document.getElementById("comment-buttons").innerHTML = `<button id="comment-close" type="button" class="btn btn-primary" onclick="closeComments()">コメントを非表示</button><button id="comment-open" type="button" class="btn btn-primary" style="display: none;" onclick="openComments()">コメントを表示</button>`;
             }
             await osql.connect(sql);
             document.getElementById("input-comment").value = "";
@@ -219,6 +282,11 @@
             selectCommentGoodsCount(object.comment_id, new_reply_num);
             selectCommentBadsCount(object.comment_id, new_reply_num);
         }
+    }
+
+    function showCommentReview() {
+        selectCommentGoodsCount();
+        selectCommentBadsCount();
     }
 
     async function selectCommentGoodsCount(toid, num) {
@@ -283,6 +351,11 @@
             spare_nums = reply_nums.concat();
             console.log(reply_nums);
         }
+    }
+
+    function showReplyReview() {
+        selectReplyGoodsCount();
+        selectReplyBadsCount();
     }
 
     async function selectReplyGoodsCount(toid, num) {
@@ -399,30 +472,6 @@
                 selectReplies();
             }
         }
-    }
-
-    async function doVideoGood(videoid) {
-        var sql = `update Videos set good = good + 1 where id = ${videoid};`;
-        await osql.connect(sql);
-        location.reload()
-    }
-
-    async function undoVideoGood(videoid) {
-        var sql = `update Videos set good = good - 1 where id = ${videoid};`;
-        await osql.connect(sql);
-        location.reload()
-    }
-
-    async function doVideoBad(videoid) {
-        var sql = `update Videos set bad = bad + 1 where id = ${videoid};`;
-        await osql.connect(sql);
-        location.reload()
-    }
-
-    async function undoVideoBad(videoid) {
-        var sql = `update Videos set bad = bad - 1 where id = ${videoid};`;
-        await osql.connect(sql);
-        location.reload()
     }
 
     async function doCommentGood(comment_id) {
