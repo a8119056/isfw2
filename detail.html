@@ -263,7 +263,7 @@
         document.getElementById("comments").innerHTML = "";
         var userid = sessionStorage.getItem("userid");
         var videoid = osql.getParam("videoid");
-        var sql = `select name, Comments.id as comment_id, Comments.userid as commenter_id, comment, Comments.good as good, Comments.bad as bad from (Videos left join Comments on Videos.id = Comments.toid) inner join Users on Comments.userid = Users.id where Comments.toid = ${videoid} and !is_to_comment;`;
+        var sql = `select name, Comments.id as comment_id, Comments.userid as commenter_id, comment from (Videos left join Comments on Videos.id = Comments.toid) inner join Users on Comments.userid = Users.id where Comments.toid = ${videoid} and !is_to_comment;`;
         var objects = await osql.connect(sql);
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];
@@ -466,11 +466,23 @@
                 if (counts.length < 1) {
                     document.getElementById("comment-button").innerHTML = "";
                     document.getElementById("comments").innerHTML = "まだコメントはありません"
+                    console.log(reply_nums);
+                    reply_nums = [0];
+                    spare_nums = reply_nums.concat();
+                    console.log(reply_nums);
                 } else {
                     selectComments();
+                    console.log(reply_nums);
+                    reply_nums.pop();
+                    spare_nums = reply_nums.concat();
+                    console.log(reply_nums);
                 }
             } else {
                 cancelReply(toid, num);
+                console.log(reply_nums);
+                reply_nums.pop();
+                spare_nums = reply_nums.concat();
+                console.log(reply_nums);
             }
         }
     }
@@ -482,7 +494,7 @@
         spare_nums = reply_nums.concat();
         console.log(reply_nums);
         var userid = sessionStorage.getItem("userid");
-        var sql = `select name, Childs.userid as replier_id, Childs.id as reply_id, Childs.comment as comment, Childs.good as good, Childs.bad as bad from (Comments as Parents left join Comments as Childs on Parents.id = Childs.toid) inner join Users on Childs.userid = Users.id where Childs.toid = ${toid} and Childs.is_to_comment;`;
+        var sql = `select name, Childs.userid as replier_id, Childs.id as reply_id, Childs.comment as commentfrom (Comments as Parents left join Comments as Childs on Parents.id = Childs.toid) inner join Users on Childs.userid = Users.id where Childs.toid = ${toid} and Childs.is_to_comment;`;
         var objects = await osql.connect(sql);
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];
