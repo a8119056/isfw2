@@ -83,7 +83,7 @@
 
         var userid = sessionStorage.getItem("userid");
         var videoid = osql.getParam("videoid");
-        var sql = `select Videos.id as videoid, url, note, good, bad, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id where Videos.id = ${videoid};`;
+        var sql = `select Videos.id as videoid, url, note, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id where Videos.id = ${videoid};`;
         var objects = await osql.connect(sql);
         var object = objects[0];
 
