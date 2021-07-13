@@ -478,7 +478,7 @@
         reply_nums = spare_nums.concat(spare_nums[spare_nums.length - 1] + 1);
         spare_nums = reply_nums.concat();
         var userid = sessionStorage.getItem("userid");
-        var sql = `select name, Childs.userid as replier_id, Childs.id as reply_id, Childs.comment as commentfrom (Comments as Parents left join Comments as Childs on Parents.id = Childs.toid) inner join Users on Childs.userid = Users.id where Childs.toid = ${toid} and Childs.is_to_comment;`;
+        var sql = `select name, Childs.userid as replier_id, Childs.id as reply_id, Childs.comment as comment from (Comments as Parents left join Comments as Childs on Parents.id = Childs.toid) inner join Users on Childs.userid = Users.id where Childs.toid = ${toid} and Childs.is_to_comment;`;
         var objects = await osql.connect(sql);
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];
