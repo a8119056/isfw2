@@ -53,13 +53,13 @@
             <form class="mb-4 w-75">
                 <p id="name-result" class="mt-4"><br></p>
                 <div class="mb-3">
-                    <label class="fs-4">ユーザ名変更</label>
+                    <label class="fs-4 mb-2">ユーザ名変更</label>
                     <input id="new-name" type="text" class="form-control"></input>
                 </div>
                 <button type="button" class="btn btn-primary" onclick="changeName()">変更</button>
                 <p id="bio-result" class="mt-4"><br></p>
                 <div class="mt-2 mb-3">
-                    <label class="fs-4">プロフィール更新</label>
+                    <label class="fs-4 mb-2">プロフィール更新</label>
                     <textarea id="new-bio" rows="4" cols="60" class="form-control" placeholder="自由に自分をアピールしましょう！(無記入可)"></textarea>
                 </div>
                 <button type="button" class="btn btn-primary" onclick="updateBiography()">更新</button>
@@ -68,13 +68,19 @@
                     <div>
                         <label class="fs-4 mb-2">パスワード変更</label>
                     </div>
-                    <div class="mb-2">
+                    <div class="mb-3">
                         <label>現在のパスワード</label>
                         <input id="old-password" type="password" class="form-control"></input>
                     </div>
-                    <div class="mb-2">
+                    <div class="mb-3">
                         <label> 新しいパスワード</label>
                         <input id="new-password" type="password" class="form-control"></input>
+                        <p class="form-text">8文字以上の半角英数字・半角記号</p>
+                    </div>
+                    <div class="mb-3">
+                        <label> 新しいパスワード (再入力)</label>
+                        <input id="new-password-confirm" type="password" class="form-control"></input>
+                        <p class="form-text">確認のため，もう一度入力してください</p>
                     </div>
                 </div>
                 <button type="button" class="btn btn-primary" onclick="changePassword()">変更</button>
@@ -144,6 +150,8 @@
         } else {
             await osql.connect(sql);
             document.getElementById("name-result").innerHTML = "ユーザ名を変更しました";
+            document.getElementById("bio-result").innerHTML = "";
+            document.getElementById("password-result").innerHTML = "";
             sessionStorage.setItem("username", new_name);
             doSelect();
         }
@@ -155,6 +163,8 @@
         var sql = `update Users set bio = "${new_bio}" where id = "${userid}";`;
         await osql.connect(sql);
         document.getElementById("bio-result").innerHTML = "プロフィールを変更しました";
+        document.getElementById("name-result").innerHTML = "";
+        document.getElementById("password-result").innerHTML = "";
         doSelect();
     }
 
@@ -162,12 +172,13 @@
         var userid = sessionStorage.getItem("userid");
         var old_password = document.getElementById("old-password").value;
         var new_password = document.getElementById("new-password").value;
-        if (old_password.length < 1 && new_password < 1) {
-            document.getElementById("password-result").innerHTML = `<span class="text-danger">*</span>変更失敗: パスワードを入力してください`;
-        } else if (old_password.length < 1) {
-            document.getElementById("password-result").innerHTML = `<span class="text-danger">*</span>変更失敗: 現在のパスワードを入力してください`;
-        } else if (new_password < 1) {
-            document.getElementById("password-result").innerHTML = `<span class="text-danger">*</span>変更失敗: 新しいパスワードを入力してください`;
+        var new_password_confirm = document.getElementById("new-password-confirm").value;
+        if (old_password.length < 1 || new_password.length < 1 || new_password_confirm.length < 1) {
+            document.getElementById("password-result").innerHTML = `<span class="text-danger">*</span>変更失敗: すべての項目を入力してください`;
+        } else if (new_password.length < 8) {
+            document.getElementById("password-result").innerHTML = `<span class="text-danger">*</span>変更失敗: 新しいパスワードは8文字以上で入力してください`;
+        } else　 if (new_password !== new_password_confirm) {
+            document.getElementById("password-result").innerHTML = `<span class="text-danger">*</span>変更失敗: 再入力したパスワードが異なります`;
         } else {
             var check_sql = `select password from Users where id = "${userid}";`;
             var check_objects = await osql.connect(check_sql);
@@ -182,6 +193,11 @@
                     if (isConfirmed) {
                         await osql.connect(sql);
                         document.getElementById("password-result").innerHTML = "パスワードを変更しました";
+                        document.getElementById("name-result").innerHTML = "";
+                        document.getElementById("bio-result").innerHTML = "";
+                        document.getElementById("old-password").value = "";
+                        document.getElementById("new-password").value = "";
+                        document.getElementById("new-password-confirm").value = "";
                         doSelect();
                     }
                 }
