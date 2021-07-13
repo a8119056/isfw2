@@ -12,32 +12,41 @@
 </head>
 
 <body class="bg-light">
-    <div class="card border-dark bg-light border-2 rounded-3 position-absolute translate-middle start-50 top-50 w-75">
-        <div class="card-body mx-4 mt-3 mb-2">
-            <h2 class="card-title text-center mb-3">動画共有SNS</h2>
-            <p id="result"><br></p>
-            <form>
-                <div class="mb-4">
-                    <label>ID</label>
-                    <input id="id" type="text" class="form-control">
-                </div>
-                <div class="mb-4">
-                    <label>パスワード</label>
-                    <input id="password" type="password" class="form-control">
-                </div>
-                <div class="text-center mb-3">
-                    <button type="button" class="btn btn-primary" onclick="login()">ログイン</button>
-                    <a href="register.html" class="btn btn-outline-success ms-4">新規登録</a>
-                </div>
-            </form>
+    <div class="position-absolute start-50 top-50 translate-middle w-75 h-100 my-5">
+        <div class="card border-dark bg-light border-2 rounded-3">
+            <div class="card-body mx-4 mt-3 mb-2">
+                <h1 class="card-title text-center mb-3">動画共有SNS</h1>
+                <h2 class="card-title text-center mb-3">-
+                    <ruby>
+                    <rb>Seraphia</rb>
+                    <rt>セラフィア</rt>
+                    </ruby> -
+                </h2>
+                <p id="result"><br></p>
+                <form>
+                    <div class="mb-4">
+                        <label>ID</label>
+                        <input id="id" type="text" class="form-control">
+                    </div>
+                    <div class="mb-4">
+                        <label>パスワード</label>
+                        <input id="password" type="password" class="form-control">
+                    </div>
+                    <div class="text-center mb-3">
+                        <button type="button" class="btn btn-primary" onclick="login()">ログイン</button>
+                        <a href="register.html" class="btn btn-outline-success ms-4">新規登録</a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
+    <div class="user-select-none">
+        <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+    </div>
     <footer>
-        <div class="position-absolute top-100 start-50 translate-middle w-100">
-            <hr>
-            <div class="text-center p-4">
-                <p>&copy; 2021 AEON SOFT Ltd.<br>All rights reserved.</p>
-            </div>
+        <hr>
+        <div class="text-center p-4">
+            <p>&copy; 2021 AEON SOFT Ltd.<br>All rights reserved.</p>
         </div>
     </footer>
 </body>
