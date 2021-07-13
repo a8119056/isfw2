@@ -71,8 +71,6 @@
             reply_nums = [0];
         }
         spare_nums = reply_nums.concat();
-        console.log(reply_nums);
-        console.log(spare_nums);
     }
 
     async function selectVideo() {
@@ -246,20 +244,16 @@
             document.getElementById("input-comment").value = "";
             selectComments();
             document.getElementById("comment-result").innerHTML = "投稿しました";
-            console.log(reply_nums);
             reply_nums = spare_nums.concat(spare_nums[spare_nums.length - 1] + 1);
             spare_nums = reply_nums.concat();
-            console.log(reply_nums);
         } else {
             document.getElementById("comment-result").innerHTML = `<span class=text-danger>*</span>投稿失敗: コメントを入力してください`;
         }
     }
 
     async function selectComments() {
-        console.log(reply_nums);
         reply_nums = spare_nums.concat(spare_nums[spare_nums.length - 1] + 1);
         spare_nums = reply_nums.concat();
-        console.log(reply_nums);
         document.getElementById("comments").innerHTML = "";
         var userid = sessionStorage.getItem("userid");
         var videoid = osql.getParam("videoid");
@@ -460,39 +454,29 @@
             if (!is_to_comment) {
                 var count_sql = `select Videos.id from (Videos inner join Users on Videos.userid = Users.id) left join Comments on Videos.id = Comments.toid where Comments.toid = ${videoid} and !is_to_comment;`;
                 var counts = await osql.connect(count_sql);
-                console.log(reply_nums);
                 reply_nums = spare_nums.concat();
-                console.log(reply_nums);
                 if (counts.length < 1) {
                     document.getElementById("comment-button").innerHTML = "";
                     document.getElementById("comments").innerHTML = "まだコメントはありません"
-                    console.log(reply_nums);
                     reply_nums = [0];
                     spare_nums = reply_nums.concat();
-                    console.log(reply_nums);
                 } else {
                     selectComments();
-                    console.log(reply_nums);
                     reply_nums.pop();
                     spare_nums = reply_nums.concat();
-                    console.log(reply_nums);
                 }
             } else {
                 cancelReply(toid, num);
-                console.log(reply_nums);
                 reply_nums.pop();
                 spare_nums = reply_nums.concat();
-                console.log(reply_nums);
             }
         }
     }
 
 
     async function selectReplies(toid, reply_num) {
-        console.log(reply_nums);
         reply_nums = spare_nums.concat(spare_nums[spare_nums.length - 1] + 1);
         spare_nums = reply_nums.concat();
-        console.log(reply_nums);
         var userid = sessionStorage.getItem("userid");
         var sql = `select name, Childs.userid as replier_id, Childs.id as reply_id, Childs.comment as commentfrom (Comments as Parents left join Comments as Childs on Parents.id = Childs.toid) inner join Users on Childs.userid = Users.id where Childs.toid = ${toid} and Childs.is_to_comment;`;
         var objects = await osql.connect(sql);
@@ -539,10 +523,8 @@
             cancelReply(toid, num);
             document.getElementById("reply-result" + num).innerHTML = "返信しました";
             document.getElementById("comment-result").innerHTML = "<br>";
-            console.log(reply_nums);
             reply_nums = spare_nums.concat(spare_nums[spare_nums.length - 1] + 1);
             spare_nums = reply_nums.concat();
-            console.log(reply_nums);
         } else {
             document.getElementById("reply-result" + num).innerHTML = `<span class=text-danger>*</span>投稿失敗: 返信内容を入力してください`;
         }
