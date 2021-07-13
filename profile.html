@@ -34,7 +34,7 @@
         </div>
         <div class="mb-5">
             <p id="counts"></p>
-            <button id="list-btn" type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#list">一覧を表示</button>
+            <button id="list-btn" type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#list">フォロー・フォロワーの一覧</button>
         </div>
 
         <div class="modal fade" id="list" tabindex="-1" aria-labelledby="list-label" aria-hidden="true">
@@ -52,7 +52,9 @@
         </div>
 
         <h3 id="posts"></h3>
-        <div id="videos" class="row row-cols-auto mt-3">まだ投稿がありません</div>
+        <div><button id="good-posts-btn" type="button" class="btn btn-primary my-3" onclick="selectGoodVideos()">いいねした投稿を表示</button></div>
+        <div><button id="posts-btn" type="button" class="btn btn-primary my-3" onclick="selectAllVideos()"></button></div>
+        <div id="videos" class="row row-cols-auto mt-3"></div>
     </div>
     <hr>
     <footer>
@@ -77,7 +79,7 @@
             selectProfile();
             selectFollowCounts();
             selectFollows();
-            selectVideos();
+            selectAllVideos();
         }
     }
 
@@ -131,7 +133,7 @@
         var object = objects[0];
         document.getElementById("profile-header").innerHTML = object.name;
         document.getElementById("title").innerHTML = `${object.name}さんのプロフィール | 動画共有SNS`;
-        document.getElementById("posts").innerHTML = `${object.name}さんの投稿`;
+        document.getElementById("posts-btn").innerHTML = `${object.name}さんの投稿を表示`;
         if (object.bio === null) {
             document.getElementById("bio").innerHTML = `<span class="text-muted">(未設定)</span>`;
         } else {
@@ -200,11 +202,14 @@
         document.getElementById("follow-list").innerHTML = table;
     }
 
-    async function selectVideos() {
+    async function selectAllVideos() {
         var login_id = sessionStorage.getItem("userid");
         var poster_id = osql.getParam("userid");
-        var sql = `select Videos.id as videoid, url, note, good, bad, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id where userid = "${poster_id}" order by videoid desc;;`;
+        var sql = `select Videos.id as videoid, url, note, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id where Videos.userid = "${poster_id}" order by videoid desc;`;
         var objects = await osql.connect(sql);
+        if (objects.length < 1) {
+            document.getElementById("videos").innerHTML = `<div>まだ投稿がありません</div>`;
+        }
         for (let i = 0; i < objects.length; i++) {
             object = objects[i];
             if (i < 1) {
@@ -220,6 +225,41 @@
                 document.getElementById("delete" + i).innerHTML = `<button type="button" class="btn btn-sm btn-danger" onclick="doDelete(${object.videoid}, ${i})">削除</button>`;
             }
         }
+        document.getElementById("posts").innerHTML = `${objects[0].name}さんの投稿`
+        document.getElementById("good-posts-btn").style.display = "block";
+        document.getElementById("posts-btn").style.display = "none";
+    }
+
+    async function selectGoodVideos() {
+        var login_id = sessionStorage.getItem("userid");
+        var good_user_id = osql.getParam("userid");
+        var sql = `select Videos.id as videoid, url, note, Users.id as userid, name from (Videos inner join Users on Videos.userid = Users.id) inner join Goods on Videos.id = Goods.toid where Goods.userid = "${good_user_id}" order by Videos.id desc;`;
+        var objects = await osql.connect(sql);
+        var name_sql = `select name from Users where id = "${good_user_id}"`;
+        var name_objects = await osql.connect(name_sql);
+        var good_user_name = name_objects[0].name;
+        if (objects.length < 1) {
+            document.getElementById("videos").innerHTML = `<div>いいねした投稿はありません</div>`;
+        }
+        for (let i = 0; i < objects.length; i++) {
+            object = objects[i];
+            if (i < 1) {
+                document.getElementById("videos").innerHTML = `<div id="post${i}" class="card border-dark bg-light col p-4 mb-3 mx-2"><iframe width='256' height='144' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user${i}" class="mt-2"></div><div id="review${i}"></div><div class="my-3"><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></div><div id="delete${i}" class="float-end"></div></div>`;
+            } else {
+                document.getElementById("videos").innerHTML += `<div  id="post${i}" class="card border-dark bg-light col p-4 mb-3 mx-2"><iframe width='256' height='144' src='https://www.youtube.com/embed/${object.url}' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe><div id="user${i}" class="mt-2"></div><div id="review${i}"></div><div class="my-3"><a href="detail.html?videoid=${object.videoid}" class="btn btn-primary">投稿詳細へ</a></div><div id="delete${i}" class="float-end"></div></div>`;
+            }
+            document.getElementById("user" + i).innerHTML = `<a href="profile.html?userid=${object.userid}" class="btn btn-sm btn-outline-dark fs-5 mt-3 mb-2">${object.name}</a><p class="mt-2 text-break" style="width: 256px;">${object.note}</p>`;
+            document.getElementById("review" + i).innerHTML = `👍<span id="good${i}" class="ms-2"></span><span class="ms-4">👎<span id="bad${i}" class="ms-2"></span></span>`;
+            selectGoodsCount(object.videoid, i);
+            selectBadsCount(object.videoid, i);
+            if (object.userid === login_id) {
+                document.getElementById("delete" + i).innerHTML = `<button type="button" class="btn btn-sm btn-danger" onclick="doDelete(${object.videoid}, ${i})">削除</button>`;
+            }
+
+        }
+        document.getElementById("posts").innerHTML = `${good_user_name}さんがいいねした投稿`;
+        document.getElementById("good-posts-btn").style.display = "none";
+        document.getElementById("posts-btn").style.display = "block";
     }
 
     async function selectGoodsCount(toid, num) {
