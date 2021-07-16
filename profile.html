@@ -205,8 +205,10 @@
     async function selectAllVideos() {
         var login_id = sessionStorage.getItem("userid");
         var poster_id = osql.getParam("userid");
-        var sql = `select Videos.id as videoid, url, note, Users.id as userid, name from Videos inner join Users on Videos.userid = Users.id where Videos.userid = "${poster_id}" order by videoid desc;`;
+        var sql = `select Videos.id as videoid, url, note, Users.id as userid from Videos inner join Users on Videos.userid = Users.id where Videos.userid = "${poster_id}" order by videoid desc;`;
         var objects = await osql.connect(sql);
+        var name_sql = `select name from Users where id = "${poster_id}";`;
+        var name_objects = await osql.connect(name_sql);
         if (objects.length < 1) {
             document.getElementById("videos").innerHTML = `<div>まだ投稿がありません</div>`;
         }
@@ -225,7 +227,7 @@
                 document.getElementById("delete" + i).innerHTML = `<button type="button" class="btn btn-sm btn-danger" onclick="doDelete(${object.videoid}, ${i})">削除</button>`;
             }
         }
-        document.getElementById("posts").innerHTML = `${objects[0].name}さんの投稿`
+        document.getElementById("posts").innerHTML = `${name_objects[0].name}さんの投稿`
         document.getElementById("good-posts-btn").style.display = "block";
         document.getElementById("posts-btn").style.display = "none";
     }
